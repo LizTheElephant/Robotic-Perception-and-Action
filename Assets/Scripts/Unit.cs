@@ -130,20 +130,6 @@ public class Unit : MonoBehaviour
         foreach (Node p in path.exploredSet)
         {
             p.ExploreNode();
-
-            /*
-            Vector3 ArrowOrigin = p.exploredFrom.worldPosition + Vector3.up;
-            Vector3 ArrowTarget = p.worldPosition + Vector3.up;
-            cachedLineRenderer.widthCurve = new AnimationCurve(new Keyframe(0, 1f)
-                , new Keyframe(0.999f - PercentHead, 1f)  // neck of arrow
-                , new Keyframe(1 - PercentHead, 1f)  // max width of arrow head
-                , new Keyframe(1, 0f));  // tip of arrow
-
-            cachedLineRenderer.SetPositions(new Vector3[] {
-              ArrowOrigin, Vector3.Lerp(ArrowOrigin, ArrowTarget, 0.999f - PercentHead), Vector3.Lerp(ArrowOrigin, ArrowTarget, 1 - PercentHead), ArrowTarget });
-              */
-            //p.token.SetActive(true);
-            //Instantiate(Resources.Load("ExploredToken"), p.worldPosition + Vector3.up * exploredTokenOffset, Quaternion.identity);
             yield return new WaitForSeconds(0.1f); // time delay for 2 seconds
         }
 
