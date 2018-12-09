@@ -30,7 +30,7 @@ public class Unit : MonoBehaviour
         StartCoroutine(UpdatePath());
     }
 
-    public void OnPathFound(Vector3[] waypoints, List<Node> exploredSet, bool pathSuccessful)
+    public void OnPathFound(List<Node> waypoints, List<Node> exploredSet, bool pathSuccessful)
     {
 
         if (pathSuccessful)
@@ -81,7 +81,7 @@ public class Unit : MonoBehaviour
 
         followingPath = true;
         int pathIndex = 0;
-        transform.LookAt(path.lookPoints[0]);
+        transform.LookAt(path.lookPoints[0].worldPosition);
 
         float speedPercent = 1;
 
@@ -114,7 +114,7 @@ public class Unit : MonoBehaviour
                     }
                 }
 
-                Quaternion targetRotation = Quaternion.LookRotation(path.lookPoints[pathIndex] - transform.position);
+                Quaternion targetRotation = Quaternion.LookRotation(path.lookPoints[pathIndex].worldPosition - transform.position);
                 transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * turnSpeed);
                 transform.Translate(Vector3.forward * Time.deltaTime * speed * speedPercent, Space.Self);
             }

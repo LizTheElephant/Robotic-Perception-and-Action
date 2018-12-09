@@ -18,7 +18,7 @@ public class Pathfinding : MonoBehaviour
     public void FindPath(PathRequest request, Action<PathResult> callback)
     {
         List<Node> exploredSet = new List<Node>();
-        Vector3[] waypoints = new Vector3[0];
+        List<Node> waypoints = new List<Node> ();
         bool pathSuccess = false;
 
         Node startNode = grid.NodeFromWorldPoint(request.pathStart);
@@ -81,14 +81,14 @@ public class Pathfinding : MonoBehaviour
         if (pathSuccess)
         {
             waypoints = RetracePath(startNode, targetNode);
-            pathSuccess = waypoints.Length > 0;
+            pathSuccess = waypoints.Count > 0;
             print("exploredPoints: " + exploredSet.Count);
         }
         callback(new PathResult(waypoints, exploredSet, pathSuccess, request.callback));
 
     }
 
-    Vector3[] RetracePath(Node startNode, Node endNode)
+    List<Node> RetracePath(Node startNode, Node endNode)
     {
         List<Node> path = new List<Node>();
         Node currentNode = endNode;
@@ -99,9 +99,9 @@ public class Pathfinding : MonoBehaviour
             currentNode = currentNode.parent;
         }
         //Vector3[] waypoints = SimplifyPath(path);
-        Vector3[] waypoints = NodeListToV3(path);
-        Array.Reverse(waypoints);
-        return waypoints;
+        //Vector3[] waypoints = NodeListToV3(path);
+        path.Reverse();
+        return path;
 
     }
 

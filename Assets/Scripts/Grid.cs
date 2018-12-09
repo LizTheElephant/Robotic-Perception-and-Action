@@ -85,7 +85,6 @@ public class Grid : MonoBehaviour
             }
         }
 
-        Debug.Log("Created Grid");
         BlurPenaltyMap(3);
 
     }

@@ -57,12 +57,12 @@ public class PathRequestManager : MonoBehaviour
 
 public struct PathResult
 {
-    public Vector3[] path;
+    public List<Node> path;
     public List<Node> exploredPoints;
     public bool success;
-    public Action<Vector3[], List<Node>, bool> callback;
+    public Action<List<Node>, List<Node>, bool> callback;
 
-    public PathResult(Vector3[] path, List<Node> exploredPoints, bool success, Action<Vector3[], List<Node>, bool> callback)
+    public PathResult(List<Node> path, List<Node> exploredPoints, bool success, Action<List<Node>, List<Node>, bool> callback)
     {
         this.path = path;
         this.exploredPoints = exploredPoints;
@@ -76,9 +76,9 @@ public struct PathRequest
 {
     public Vector3 pathStart;
     public Vector3 pathEnd;
-    public Action<Vector3[], List<Node>, bool> callback;
+    public Action<List<Node>, List<Node>, bool> callback;
 
-    public PathRequest(Vector3 _start, Vector3 _end, Action<Vector3[], List<Node>, bool> _callback)
+    public PathRequest(Vector3 _start, Vector3 _end, Action<List<Node>, List<Node>, bool> _callback)
     {
         pathStart = _start;
         pathEnd = _end;
