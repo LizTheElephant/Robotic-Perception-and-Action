@@ -17,6 +17,8 @@ public class Pathfinding : MonoBehaviour
 
     public void FindPath(PathRequest request, Action<PathResult> callback)
     {
+
+        print("Pathfinder finding path");
         List<Node> exploredSet = new List<Node>();
         List<Node> waypoints = new List<Node> ();
         bool pathSuccess = false;
@@ -34,9 +36,6 @@ public class Pathfinding : MonoBehaviour
             exploredSet.Add(startNode);
             startNode.ExploreFrom(startNode);
 
-
-            print("startNode:" + startNode);
-
             while (openSet.Count > 0)
             {
                 Node currentNode = openSet.RemoveFirst();
@@ -44,7 +43,7 @@ public class Pathfinding : MonoBehaviour
                 //print ("openset:" + openSet.Count);
                 if (currentNode == targetNode)
                 {
-                    //print ("Path found!");
+                    print ("Path found!");
                     pathSuccess = true;
                     break;
                 }
@@ -98,23 +97,12 @@ public class Pathfinding : MonoBehaviour
             path.Add(currentNode);
             currentNode = currentNode.parent;
         }
-        //Vector3[] waypoints = SimplifyPath(path);
-        //Vector3[] waypoints = NodeListToV3(path);
+        path.Add(startNode);
         path.Reverse();
         return path;
 
     }
 
-    Vector3[] NodeListToV3(List<Node> path)
-    {
-        List<Vector3> waypoints = new List<Vector3>();
-
-        for (int i = 1; i < path.Count; i++)
-        {
-            waypoints.Add(path[i].worldPosition);
-        }
-        return waypoints.ToArray();
-    }
     Vector3[] SimplifyPath(List<Node> path)
     {
         List<Vector3> waypoints = new List<Vector3>();

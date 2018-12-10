@@ -51,7 +51,7 @@ public class Grid : MonoBehaviour
 
     void CreateGrid()
     {
-        GameObject prefab = Resources.Load("ExploredToken") as GameObject;
+        GameObject prefab = Resources.Load("Prefabs/Token") as GameObject;
 
         grid = new Node[gridSizeX, gridSizeY];
         exploredNodes = new List<Node>();

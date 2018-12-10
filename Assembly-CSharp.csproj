@@ -55,13 +55,14 @@
   <ItemGroup>
      <Compile Include="Assets\Scripts\Grid.cs" />
      <Compile Include="Assets\Scripts\Heap.cs" />
-     <Compile Include="Assets\Scripts\Hermite_Curve.cs" />
      <Compile Include="Assets\Scripts\Line.cs" />
      <Compile Include="Assets\Scripts\Node.cs" />
      <Compile Include="Assets\Scripts\Path.cs" />
      <Compile Include="Assets\Scripts\Pathfinding.cs" />
      <Compile Include="Assets\Scripts\PathRequestManager.cs" />
+     <Compile Include="Assets\Scripts\Token.cs" />
      <Compile Include="Assets\Scripts\Unit.cs" />
+     <None Include="Assets\Resources\StandardSpecular_Edited.shader" />
  <Reference Include="UnityEditor.StandardEvents">
  <HintPath>/home/elisabeth/Unity/Pathfinding/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
  </Reference>

@@ -35,6 +35,7 @@ public class Unit : MonoBehaviour
 
         if (pathSuccessful)
         {
+            Debug.Log("Unit found Path");
             path = new Path(waypoints, exploredSet, transform.position, turnDst, stoppingDst);
             print("path found: " + exploredSet.Count);
 
@@ -53,6 +54,7 @@ public class Unit : MonoBehaviour
     IEnumerator UpdatePath()
     {
 
+        Debug.Log("Unit Updated Path");
         //the first few frames in unity can have large delta time values.
         //therefore the followpath accurracy is very low right after hitting play
         if (Time.timeSinceLevelLoad < .3f)
@@ -79,6 +81,7 @@ public class Unit : MonoBehaviour
     IEnumerator FollowPath()
     {
 
+        Debug.Log("Unit follows Path");
         followingPath = true;
         int pathIndex = 0;
         transform.LookAt(path.lookPoints[0].worldPosition);
@@ -126,6 +129,8 @@ public class Unit : MonoBehaviour
 
     IEnumerator ShowExploredArea()
     {
+
+        Debug.Log("Unit shows Explored Area");
         exploringPath = true;
         foreach (Node p in path.exploredSet)
         {
@@ -134,11 +139,51 @@ public class Unit : MonoBehaviour
         }
 
         exploringPath = false;
+        StartCoroutine("DrawPath");
+
+        //wait one frame
+        yield return null;
+    }
+
+    IEnumerator DrawPath()
+    {
+
+        Debug.Log("Unit draws Path");
+        List<Node> waypoints = new List<Node>(path.lookPoints);
+        waypoints.Reverse();
+        Token script;
+
+        foreach (Node n in waypoints)
+        {
+            script = n.token.GetComponent<Token>();
+            script.SetAsChosenPath();
+            yield return new WaitForSeconds(0.1f); // time delay for 2 seconds
+        }
+
+        StartCoroutine("DissolveSurrounding");
+
+        //wait one frame
+        yield return null;
+    }
+
+    IEnumerator DissolveSurrounding()
+    {
+
+        Debug.Log("Unit dissolves Surrounding ");
+        Token script;
+        foreach (Node n in path.exploredSet)
+        {
+            script = n.token.GetComponent<Token>();
+            script.Dissolve();
+        }
+
+        yield return new WaitForSeconds(0.1f);
         StartCoroutine("FollowPath");
 
         //wait one frame
         yield return null;
     }
+
 
     public void OnDrawGizmos()
     {

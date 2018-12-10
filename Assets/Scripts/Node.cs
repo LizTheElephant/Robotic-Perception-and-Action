@@ -93,56 +93,5 @@ public class Node : IHeapItem<Node>
     public void ExploreFrom(Node parent)
     {
         exploredFrom = parent;
-        /*
-        float delta_x = (parent.worldPosition.x - worldPosition.x);
-        float delta_y = (parent.worldPosition.z - worldPosition.z);
-
-        if (delta_x > 0)
-        {
-            if (delta_y > 0)
-            {
-                exploredFrom = Direction.NE;
-            }
-            else if (delta_y < 0)
-            {
-                exploredFrom = Direction.SE;
-            }
-            else
-            {
-                exploredFrom = Direction.E;
-            }
-        }
-        else if (delta_x < 0)
-        {
-            if (delta_y > 0)
-            {
-                exploredFrom = Direction.NW;
-            }
-            else if (delta_y < 0)
-            {
-                exploredFrom = Direction.SW;
-            }
-            else
-            {
-                exploredFrom = Direction.W;
-            }
-        }
-        else
-        {
-
-            if (delta_y > 0)
-            {
-                exploredFrom = Direction.N;
-            }
-            else if (delta_y < 0)
-            {
-                exploredFrom = Direction.S;
-            }
-            else
-            {
-                exploredFrom = Direction.C;
-            }
-        }
-        */
     }
 }
