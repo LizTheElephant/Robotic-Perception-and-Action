@@ -28,16 +28,25 @@ public class Pathfinding : MonoBehaviour
         startNode.parent = startNode;
 
 
-        if (startNode.walkable && targetNode.walkable)
+
+        print("Pathfinder grid.Maxsize..." + grid.MaxSize);
+        print("Pathfinder startnode..." + startNode.walkable);
+
+        print("Pathfinder targetnode..." + targetNode.walkable);
+        if (/*startNode.walkable && */targetNode.walkable)
         {
+
             Heap<Node> openSet = new Heap<Node>(grid.MaxSize);
             HashSet<Node> closedSet = new HashSet<Node>();
             openSet.Add(startNode);
             exploredSet.Add(startNode);
             startNode.ExploreFrom(startNode);
 
+            print("Pathfinder openSet..." + openSet);
             while (openSet.Count > 0)
             {
+
+                print("Pathfinder working...");
                 Node currentNode = openSet.RemoveFirst();
                 closedSet.Add(currentNode);
                 //print ("openset:" + openSet.Count);

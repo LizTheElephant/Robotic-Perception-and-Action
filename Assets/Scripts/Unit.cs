@@ -9,7 +9,7 @@ public class Unit : MonoBehaviour
     const float pathUpdateMoveThreshold = .5f;
 
     public Transform target;
-    public float speed = 20;
+    public float speed = 15;
     public float turnSpeed = 3;
     public float turnDst = 5;
     public float stoppingDst = 10;
@@ -17,7 +17,6 @@ public class Unit : MonoBehaviour
     Path path;
     const int exploredTokenOffset = 5;
     bool followingPath;
-    bool exploringPath;
     /*
 
     public float PercentHead = 0.2f;
@@ -36,18 +35,31 @@ public class Unit : MonoBehaviour
         if (pathSuccessful)
         {
             Debug.Log("Unit found Path");
+            StopCoroutine("FollowPath");
+            StopCoroutine("ShowExploredArea");
+            StopCoroutine("DrawPath");
+            StopCoroutine("DissolveSurrounding");
+
+            if (path != null)
+            {
+
+                foreach (Node n in path.exploredSet)
+                {
+                    n.Reset();
+                }
+                foreach (Node n in path.lookPoints)
+                {
+                    n.Reset();
+                }
+
+            }
+
+
             path = new Path(waypoints, exploredSet, transform.position, turnDst, stoppingDst);
             print("path found: " + exploredSet.Count);
 
-            StopCoroutine("FollowPath");
             followingPath = false;
-            /*if (cachedLineRenderer == null)
-            {
-                cachedLineRenderer = this.GetComponent<LineRenderer>();
-            }*/
-
             StartCoroutine("ShowExploredArea");
-            //StartCoroutine("FollowPath");
         }
     }
 
@@ -78,6 +90,7 @@ public class Unit : MonoBehaviour
         }
     }
 
+
     IEnumerator FollowPath()
     {
 
@@ -87,6 +100,8 @@ public class Unit : MonoBehaviour
         transform.LookAt(path.lookPoints[0].worldPosition);
 
         float speedPercent = 1;
+
+        Token script;
 
         while (followingPath)
         {
@@ -116,10 +131,12 @@ public class Unit : MonoBehaviour
                         followingPath = false;
                     }
                 }
-
                 Quaternion targetRotation = Quaternion.LookRotation(path.lookPoints[pathIndex].worldPosition - transform.position);
                 transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * turnSpeed);
                 transform.Translate(Vector3.forward * Time.deltaTime * speed * speedPercent, Space.Self);
+                script = path.lookPoints[pathIndex].token.GetComponent<Token>();
+                script.Dissolve();
+
             }
             //wait one frame
             yield return null;
@@ -131,17 +148,14 @@ public class Unit : MonoBehaviour
     {
 
         Debug.Log("Unit shows Explored Area");
-        exploringPath = true;
+
         foreach (Node p in path.exploredSet)
         {
             p.ExploreNode();
             yield return new WaitForSeconds(0.1f); // time delay for 2 seconds
         }
 
-        exploringPath = false;
         StartCoroutine("DrawPath");
-
-        //wait one frame
         yield return null;
     }
 
@@ -149,18 +163,17 @@ public class Unit : MonoBehaviour
     {
 
         Debug.Log("Unit draws Path");
-        List<Node> waypoints = new List<Node>(path.lookPoints);
-        waypoints.Reverse();
         Token script;
 
-        foreach (Node n in waypoints)
+        for (int i = path.lookPoints.Count - 1; i >= 0; i--)
         {
-            script = n.token.GetComponent<Token>();
+            script = path.lookPoints[i].token.GetComponent<Token>();
             script.SetAsChosenPath();
             yield return new WaitForSeconds(0.1f); // time delay for 2 seconds
         }
 
         StartCoroutine("DissolveSurrounding");
+        StartCoroutine("FollowPath");
 
         //wait one frame
         yield return null;
@@ -174,11 +187,8 @@ public class Unit : MonoBehaviour
         foreach (Node n in path.exploredSet)
         {
             script = n.token.GetComponent<Token>();
-            script.Dissolve();
+            script.DissolveSurrounding();
         }
-
-        yield return new WaitForSeconds(0.1f);
-        StartCoroutine("FollowPath");
 
         //wait one frame
         yield return null;

@@ -5,7 +5,7 @@ using UnityEngine;
 public class Path
 {
 
-    public readonly List<Node> lookPoints;
+    public List<Node> lookPoints;
     public readonly List<Node> exploredSet;
     public readonly Line[] turnBoundaries;
     public readonly int finishLineIndex;

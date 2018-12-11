@@ -5,16 +5,17 @@ public class Token : MonoBehaviour
 {
     public Material chosenPathMaterial;
     public Material exploredAreaMaterial;
+    public float surroundingFadeDuration = 5f;
+    public float pathFadeDuration = 3f;
     Renderer rend;
-    float fadeDuration = 5f;
     bool wasChosen;
+    float fadeDuration;
 
     void Start()
     {
         wasChosen = false;
         rend = GetComponent<Renderer>();
         rend.material = exploredAreaMaterial;
-        //rend.material = Resources.Load("Materials/Explored.mat", typeof(Material)) as Material;
 
     }
 
@@ -24,54 +25,51 @@ public class Token : MonoBehaviour
         rend.material = chosenPathMaterial;
     }
 
+    public void Reset()
+    {
+        StopCoroutine("FadeAndDestroy");
+        wasChosen = false;
+        this.gameObject.SetActive(false);
+        if (rend != null)
+        {
+            rend.material = exploredAreaMaterial;
+        }
+    }
 
     public void Dissolve()
     {
+        fadeDuration = pathFadeDuration;
+        StartCoroutine("FadeAndDestroy");
+    }
+
+    public void DissolveSurrounding()
+    {
         if (!wasChosen)
         {
+            fadeDuration = surroundingFadeDuration;
             StartCoroutine("FadeAndDestroy");
         }
     }
 
     IEnumerator FadeAndDestroy() {
-        /*while (ValSlice>0.0f)
-        {
-            Debug.Log("Fading...");
-            ValSlice -= Time.deltaTime;
-            rend.material.SetFloat("_SliceAmount", ValSlice);
-
-            yield return new WaitForSeconds(0.1f);
-        }
-        */
-
-        // Cache the current color of the material, and its initiql opacity.
-        Color color = exploredAreaMaterial.color;
+        Color color = rend.material.color;
         float startOpacity = exploredAreaMaterial.color.a;
         float targetOpacity = 0.0f;
-
-        // Track how many seconds we've been fading.
         float t = 0;
 
         while (t < fadeDuration)
         {
-            // Step the fade forward one frame.
             t += Time.deltaTime;
-            // Turn the time into an interpolation factor between 0 and 1.
             float blend = Mathf.Clamp01(t / fadeDuration);
 
-            // Blend to the corresponding opacity between start & target.
             color.a = Mathf.Lerp(startOpacity, targetOpacity, blend);
-
-            // Apply the resulting color to the material.
-            exploredAreaMaterial.color = color;
-
-            // Wait one frame, and repeat.
+            rend.material.color = color;
             yield return null;
         }
 
         this.gameObject.SetActive(false);
         color.a = 1;
-        exploredAreaMaterial.color = color;
+        Reset();
 
     }
 

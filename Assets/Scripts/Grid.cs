@@ -81,7 +81,9 @@ public class Grid : MonoBehaviour
                     movementPenalty += obstacleProximityPenalty;
                 }
 
-                grid[x, y] = new Node(!collision, worldPoint, x, y, movementPenalty, Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject);
+                GameObject token = Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
+                token.transform.localScale = new Vector3(nodeDiameter-1f, 0.5f, nodeDiameter-1f); 
+                grid[x, y] = new Node(!collision, worldPoint, x, y, movementPenalty, token);
             }
         }
 

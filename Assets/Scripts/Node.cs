@@ -29,7 +29,6 @@ public class Node : IHeapItem<Node>
     public Node parent;
     public Node exploredFrom;
     int heapIndex;
-    public bool isactive;
 
     public int exploredIndex;
     //    public Direction exploredFrom;
@@ -45,8 +44,6 @@ public class Node : IHeapItem<Node>
         movementPenalty = _penalty;
         exploredIndex = 0;
 
-
-        isactive = false;
 
         _token.transform.position = _worldPos;
         _token.SetActive(false);
@@ -86,12 +83,19 @@ public class Node : IHeapItem<Node>
 
     public void ExploreNode()
     {
-        isactive = true;
         token.SetActive(true);
         ++exploredIndex;
     }
+
     public void ExploreFrom(Node parent)
     {
         exploredFrom = parent;
     }
+
+    public void Reset()
+    {
+        Token script = token.GetComponent<Token>();
+        script.Reset();
+    }
+
 }
