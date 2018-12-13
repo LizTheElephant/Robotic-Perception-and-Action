@@ -3,6 +3,7 @@ using System.Collections;
 
 public class Token : MonoBehaviour
 {
+
     public Material chosenPathMaterial;
     public Material exploredAreaMaterial;
     public float surroundingFadeDuration = 5f;
@@ -11,7 +12,7 @@ public class Token : MonoBehaviour
     bool wasChosen;
     float fadeDuration;
 
-    void Start()
+    void Awake()
     {
         wasChosen = false;
         rend = GetComponent<Renderer>();
@@ -19,9 +20,40 @@ public class Token : MonoBehaviour
 
     }
 
+    public void SetColorCode(float value, int min, int max)
+    {
+        //Debug.LogWarning("Value: " + value + ", Min: " + min + ", Max: " + max);
+        int diff = (max - min) / 2;
+        Color color;
+
+        if (value < diff)
+        {
+            color = Color.Lerp(Color.yellow, Color.red, Mathf.InverseLerp(min, diff, value));
+        }
+        else
+        {
+            color = Color.Lerp(Color.red, Color.magenta, Mathf.InverseLerp(diff, max, value));
+        }
+        rend.material.color = color;
+
+        /*
+        Color[] colors = new Color[] { Color.red, Color.magenta, Color.blue, Color.cyan, Color.green, Color.yellow, Color.red };
+
+        //Debug.LogWarning("Color Value prior:" + value);
+        value = value % (scalingFactor * colors.Length);
+        int minindex = (int) Mathf.Floor(value / scalingFactor);
+        int maxindex = (minindex + 1) % colors.Length;
+
+        //Debug.LogWarning("Value: " + value + ", Minindex: " + minindex + ", (Value - Minindex * 100) / 100: " + (value - minindex*100)/100);
+        Color color = Color.Lerp(colors[minindex], colors[maxindex], value / scalingFactor - minindex);
+        rend.material.color = color;*/
+    }
+
     public void SetAsChosenPath()
     {
+        StopCoroutine("FadeAndDestroy");
         wasChosen = true;
+        this.gameObject.SetActive(true); 
         rend.material = chosenPathMaterial;
     }
 
@@ -30,10 +62,7 @@ public class Token : MonoBehaviour
         StopCoroutine("FadeAndDestroy");
         wasChosen = false;
         this.gameObject.SetActive(false);
-        if (rend != null)
-        {
-            rend.material = exploredAreaMaterial;
-        }
+        rend.material = exploredAreaMaterial;
     }
 
     public void Dissolve()

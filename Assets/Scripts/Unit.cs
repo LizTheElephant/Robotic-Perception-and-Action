@@ -2,34 +2,63 @@
 using System.Collections;
 using System.Collections.Generic;
 
+
+
 public class Unit : MonoBehaviour
 {
 
     const float minPathUpdateTime = .2f;
     const float pathUpdateMoveThreshold = .5f;
 
-    public Transform target;
+    //public Transform target;
+    Vector3 target;
     public float speed = 15;
     public float turnSpeed = 3;
     public float turnDst = 5;
     public float stoppingDst = 10;
 
+
     Path path;
     const int exploredTokenOffset = 5;
     bool followingPath;
-    /*
 
-    public float PercentHead = 0.2f;
-    private LineRenderer cachedLineRenderer;
-    */
     void Start()
     {
-
+        //target = transform.position;
         Debug.Log("Started Unit");
-        StartCoroutine(UpdatePath());
+        //StartCoroutine("UpdatePath");
     }
 
-    public void OnPathFound(List<Node> waypoints, List<Node> exploredSet, bool pathSuccessful)
+    // Update is called once per frame
+    void Update()
+    {
+
+        Debug.Log("Unit Update..");
+        if ((Input.GetMouseButtonDown(0)))
+        {
+            RaycastHit hit;
+            Ray ray;
+            ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+            Debug.LogWarning("MousePosition" + ray) ;
+
+            if (Physics.Raycast(ray, out hit))
+            {
+                target = hit.point;
+                Debug.Log("Unit moving to " + target);
+                Debug.Log(target);
+                StartCoroutine("UpdatePath");
+            }
+
+        }
+        if (!Mathf.Approximately(gameObject.transform.position.magnitude, target.magnitude))
+        {
+            Debug.Log("Unit Update: Starting..");
+        }
+
+    }
+
+    public void OnPathFound(List<Node> waypoints, Dictionary<int, List<Node>> exploredSet, bool pathSuccessful)
     {
 
         if (pathSuccessful)
@@ -42,10 +71,12 @@ public class Unit : MonoBehaviour
 
             if (path != null)
             {
-
-                foreach (Node n in path.exploredSet)
+                foreach (KeyValuePair<int, List<Node>> entry in path.exploredSet)
                 {
-                    n.Reset();
+                    foreach (Node n in entry.Value)
+                    {
+                        n.Reset();
+                    }
                 }
                 foreach (Node n in path.lookPoints)
                 {
@@ -73,19 +104,21 @@ public class Unit : MonoBehaviour
         {
             yield return new WaitForSeconds(.3f);
         }
-        PathRequestManager.RequestPath(new PathRequest(transform.position, target.position, OnPathFound));
+        PathRequestManager.RequestPath(new PathRequest(transform.position, target, OnPathFound));
 
         float sqrMoveThreshold = pathUpdateMoveThreshold * pathUpdateMoveThreshold;
-        Vector3 targetPosOld = target.position;
+        Vector3 targetPosOld = target;
 
         while (true)
         {
+
+
             yield return new WaitForSeconds(minPathUpdateTime);
             //print (((target.position - targetPosOld).sqrMagnitude) + "    " + sqrMoveThreshold);
-            if ((target.position - targetPosOld).sqrMagnitude > sqrMoveThreshold)
+            if ((target - targetPosOld).sqrMagnitude > sqrMoveThreshold)
             {
-                PathRequestManager.RequestPath(new PathRequest(transform.position, target.position, OnPathFound));
-                targetPosOld = target.position;
+                PathRequestManager.RequestPath(new PathRequest(transform.position, target, OnPathFound));
+                targetPosOld = target;
             }
         }
     }
@@ -109,6 +142,9 @@ public class Unit : MonoBehaviour
             //in case we pass multiple turn boundaries per frame
             while (path.turnBoundaries[pathIndex].HasCrossedLine(pos2D))
             {
+                script = path.lookPoints[pathIndex].token.GetComponent<Token>();
+                script.Dissolve();
+
                 if (pathIndex == path.finishLineIndex)
                 {
                     followingPath = false;
@@ -134,8 +170,7 @@ public class Unit : MonoBehaviour
                 Quaternion targetRotation = Quaternion.LookRotation(path.lookPoints[pathIndex].worldPosition - transform.position);
                 transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * turnSpeed);
                 transform.Translate(Vector3.forward * Time.deltaTime * speed * speedPercent, Space.Self);
-                script = path.lookPoints[pathIndex].token.GetComponent<Token>();
-                script.Dissolve();
+
 
             }
             //wait one frame
@@ -149,12 +184,14 @@ public class Unit : MonoBehaviour
 
         Debug.Log("Unit shows Explored Area");
 
-        foreach (Node p in path.exploredSet)
+        foreach (KeyValuePair<int, List<Node>> entry in path.exploredSet)
         {
-            p.ExploreNode();
-            yield return new WaitForSeconds(0.1f); // time delay for 2 seconds
+            foreach (Node n in entry.Value)
+            {
+                n.ExploreNode();
+            }
+            yield return null; //new WaitForSeconds(0.03f);
         }
-
         StartCoroutine("DrawPath");
         yield return null;
     }
@@ -163,32 +200,14 @@ public class Unit : MonoBehaviour
     {
 
         Debug.Log("Unit draws Path");
-        Token script;
 
         for (int i = path.lookPoints.Count - 1; i >= 0; i--)
         {
-            script = path.lookPoints[i].token.GetComponent<Token>();
-            script.SetAsChosenPath();
+            path.lookPoints[i].ChooseAsPath();
             yield return new WaitForSeconds(0.1f); // time delay for 2 seconds
         }
 
-        StartCoroutine("DissolveSurrounding");
         StartCoroutine("FollowPath");
-
-        //wait one frame
-        yield return null;
-    }
-
-    IEnumerator DissolveSurrounding()
-    {
-
-        Debug.Log("Unit dissolves Surrounding ");
-        Token script;
-        foreach (Node n in path.exploredSet)
-        {
-            script = n.token.GetComponent<Token>();
-            script.DissolveSurrounding();
-        }
 
         //wait one frame
         yield return null;

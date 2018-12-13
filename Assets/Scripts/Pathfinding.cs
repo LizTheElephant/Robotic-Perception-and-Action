@@ -19,40 +19,34 @@ public class Pathfinding : MonoBehaviour
     {
 
         print("Pathfinder finding path");
-        List<Node> exploredSet = new List<Node>();
-        List<Node> waypoints = new List<Node> ();
+
+        Dictionary<int, List<Node>> exploredDictionary =
+            new Dictionary<int, List<Node>>();
+
+        List<Node> waypoints = new List<Node>();
         bool pathSuccess = false;
 
         Node startNode = grid.NodeFromWorldPoint(request.pathStart);
         Node targetNode = grid.NodeFromWorldPoint(request.pathEnd);
         startNode.parent = startNode;
 
-
-
-        print("Pathfinder grid.Maxsize..." + grid.MaxSize);
-        print("Pathfinder startnode..." + startNode.walkable);
-
-        print("Pathfinder targetnode..." + targetNode.walkable);
+        int iterator = 0;
         if (/*startNode.walkable && */targetNode.walkable)
         {
 
             Heap<Node> openSet = new Heap<Node>(grid.MaxSize);
             HashSet<Node> closedSet = new HashSet<Node>();
             openSet.Add(startNode);
-            exploredSet.Add(startNode);
-            startNode.ExploreFrom(startNode);
-
-            print("Pathfinder openSet..." + openSet);
             while (openSet.Count > 0)
             {
 
-                print("Pathfinder working...");
+                List<Node> exploredSet = new List<Node>();
                 Node currentNode = openSet.RemoveFirst();
+
                 closedSet.Add(currentNode);
                 //print ("openset:" + openSet.Count);
                 if (currentNode == targetNode)
                 {
-                    print ("Path found!");
                     pathSuccess = true;
                     break;
                 }
@@ -74,7 +68,6 @@ public class Pathfinding : MonoBehaviour
                         if (!openSet.Contains(neighbour))
                         {
                             openSet.Add(neighbour);
-                            neighbour.ExploreFrom(currentNode);
                             exploredSet.Add(neighbour);
                         }
 
@@ -84,15 +77,18 @@ public class Pathfinding : MonoBehaviour
                         }
                     }
                 }
+                exploredDictionary.Add(iterator, new List<Node>(exploredSet));
+                exploredSet.Clear();
+                iterator++;
+
             }
         }
         if (pathSuccess)
         {
             waypoints = RetracePath(startNode, targetNode);
             pathSuccess = waypoints.Count > 0;
-            print("exploredPoints: " + exploredSet.Count);
         }
-        callback(new PathResult(waypoints, exploredSet, pathSuccess, request.callback));
+        callback(new PathResult(waypoints, exploredDictionary, pathSuccess, request.callback));
 
     }
 

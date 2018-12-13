@@ -1,6 +1,5 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 //Represents the grid the application is taking place on
 public class Grid : MonoBehaviour
@@ -12,9 +11,14 @@ public class Grid : MonoBehaviour
     public Vector2 gridWorldSize; //area that the grid covers
     public float nodeRadius; //defines the amount of space covered by each individual node
     public TerrainType[] walkableRegions;
-    public int obstacleProximityPenalty = 10;
+    int obstacleProximityPenalty = 10;
     Dictionary<int, int> walkableRegionsDictionary = new Dictionary<int, int>();
     LayerMask walkableMask;
+
+
+    public enum PathPlanningPriority { ShortestDistance, ShortestTime, SmallestFuelConsumption, SafeDistanceFromObstacles };
+
+    public PathPlanningPriority Priority;
 
     Node[,] grid; //collection of each node in the grid
     public List<Node> exploredNodes;
@@ -32,12 +36,21 @@ public class Grid : MonoBehaviour
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
         gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
 
+
         foreach (TerrainType region in walkableRegions)
         {
             walkableMask.value |= region.terrainMask.value;
-            walkableRegionsDictionary.Add((int)Mathf.Log(region.terrainMask.value, 2), region.terrainPenalty);
+            int penalty = 1;
+            if (Priority == PathPlanningPriority.SmallestFuelConsumption)
+            {
+                penalty = region.terrainFuelConsumption;
+            }
+            else if (Priority == PathPlanningPriority.ShortestTime)
+            {
+                penalty = region.terrainPenalty;
+            }
+            walkableRegionsDictionary.Add((int)Mathf.Log(region.terrainMask.value, 2), penalty);
         }
-
         CreateGrid();
     }
 
@@ -87,7 +100,7 @@ public class Grid : MonoBehaviour
             }
         }
 
-        BlurPenaltyMap(3);
+        BlurPenaltyMap(10);
 
     }
 
@@ -213,12 +226,29 @@ public class Grid : MonoBehaviour
         }
     }
 
+    public Vector2 findFCostDimensions()
+    {
+        int maxFCost = 0, minFCost = int.MaxValue;
+        foreach (Node n in grid)
+        {
+            if (n.fCost > maxFCost)
+            {
+                maxFCost = n.fCost;
+            } else if (n.fCost < minFCost)
+            {
+                minFCost = n.fCost;
+            }
+        }
+        return new Vector2(minFCost, maxFCost);
+    }
+
 
     [System.Serializable]
     public class TerrainType
     {
         public LayerMask terrainMask;
         public int terrainPenalty;
+        public int terrainFuelConsumption;
     }
 
 

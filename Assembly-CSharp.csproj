@@ -60,6 +60,7 @@
      <Compile Include="Assets\Scripts\Path.cs" />
      <Compile Include="Assets\Scripts\Pathfinding.cs" />
      <Compile Include="Assets\Scripts\PathRequestManager.cs" />
+     <Compile Include="Assets\Scripts\PriorityQueue.cs" />
      <Compile Include="Assets\Scripts\Token.cs" />
      <Compile Include="Assets\Scripts\Unit.cs" />
      <None Include="Assets\Resources\StandardSpecular_Edited.shader" />

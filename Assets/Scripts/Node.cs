@@ -1,19 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
-/*
-public enum Direction
-{
-    C = 0,
-    N  = 1,
-    NE = 2,
-    E  = 3,
-    SE = 4,
-    S  = 5,
-    SW = 6,
-    W  = 7,
-    NW = 8
 
-}*/
+
 
 public class Node : IHeapItem<Node>
 {
@@ -30,8 +18,10 @@ public class Node : IHeapItem<Node>
     public Node exploredFrom;
     int heapIndex;
 
-    public int exploredIndex;
-    //    public Direction exploredFrom;
+    static int fCostMax = 0;
+    static int fCostMin = int.MaxValue;
+
+    Token script;
 
     public GameObject token;
 
@@ -42,10 +32,9 @@ public class Node : IHeapItem<Node>
         gridX = _gridX;
         gridY = _gridY;
         movementPenalty = _penalty;
-        exploredIndex = 0;
 
 
-        _token.transform.position = _worldPos;
+        _token.transform.position = _worldPos + Vector3.up * 0.2f;
         _token.SetActive(false);
         token = _token;
 
@@ -55,7 +44,15 @@ public class Node : IHeapItem<Node>
     {
         get
         {
-            return gCost + hCost;
+            int newfCost = gCost + hCost;
+            if (newfCost > fCostMax)
+            {
+                fCostMax = newfCost;
+            } else if (newfCost < fCostMin)
+            {
+                fCostMin = newfCost;
+            }
+            return newfCost;
         }
     }
 
@@ -83,18 +80,24 @@ public class Node : IHeapItem<Node>
 
     public void ExploreNode()
     {
-        token.SetActive(true);
-        ++exploredIndex;
-    }
 
-    public void ExploreFrom(Node parent)
+        token.SetActive(true);
+        if (script == null)
+            script = token.GetComponent<Token>();
+        script.SetColorCode(fCost, fCostMin, fCostMax);
+        script.DissolveSurrounding();
+    }
+    public void ChooseAsPath()
     {
-        exploredFrom = parent;
+        if (script == null)
+            script = token.GetComponent<Token>();
+        script.SetAsChosenPath();
     }
 
     public void Reset()
     {
-        Token script = token.GetComponent<Token>();
+        if (script == null)
+          script = token.GetComponent<Token>();
         script.Reset();
     }
 
