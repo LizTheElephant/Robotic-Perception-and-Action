@@ -1,15 +1,14 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-//Represents the grid the application is taking place on
 public class Grid : MonoBehaviour
 {
-
     public bool displayGridGizmos;
     public bool displayGridWeights;
+
     public LayerMask unwalkableMask;
-    public Vector2 gridWorldSize; //area that the grid covers
-    public float nodeRadius; //defines the amount of space covered by each individual node
+    public Vector2 gridWorldSize;
+    public float nodeRadius;
     public TerrainType[] walkableRegions;
     int obstacleProximityPenalty = 10;
     Dictionary<int, int> walkableRegionsDictionary = new Dictionary<int, int>();
@@ -39,16 +38,13 @@ public class Grid : MonoBehaviour
 
         foreach (TerrainType region in walkableRegions)
         {
+            Debug.Log("Region " + region + "is walkable");
             walkableMask.value |= region.terrainMask.value;
             int penalty = 1;
             if (Priority == PathPlanningPriority.SmallestFuelConsumption)
-            {
                 penalty = region.terrainFuelConsumption;
-            }
             else if (Priority == PathPlanningPriority.ShortestTime)
-            {
                 penalty = region.terrainPenalty;
-            }
             walkableRegionsDictionary.Add((int)Mathf.Log(region.terrainMask.value, 2), penalty);
         }
         CreateGrid();
@@ -78,24 +74,19 @@ public class Grid : MonoBehaviour
                 Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
                 //CheckSphere returns true if there is a collision with objects inside the unwalkable layer
                 bool collision = Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask);
-
                 int movementPenalty = 0;
 
 
                 Ray ray = new Ray(worldPoint + Vector3.up * 50, Vector3.down);
                 RaycastHit hit;
                 if (Physics.Raycast(ray, out hit, 100, walkableMask))
-                {
                     walkableRegionsDictionary.TryGetValue(hit.collider.gameObject.layer, out movementPenalty);
-                }
 
                 if (collision)
-                {
                     movementPenalty += obstacleProximityPenalty;
-                }
 
                 GameObject token = Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
-                token.transform.localScale = new Vector3(nodeDiameter-1f, 0.5f, nodeDiameter-1f); 
+                token.name = "Token: " + x + ", " + y;
                 grid[x, y] = new Node(!collision, worldPoint, x, y, movementPenalty, token);
             }
         }

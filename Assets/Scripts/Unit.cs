@@ -21,19 +21,16 @@ public class Unit : MonoBehaviour
     Path path;
     const int exploredTokenOffset = 5;
     bool followingPath;
+    GameObject star;
 
     void Start()
     {
-        //target = transform.position;
-        Debug.Log("Started Unit");
-        //StartCoroutine("UpdatePath");
+        star = GameObject.Find("Star");
     }
 
     // Update is called once per frame
     void Update()
     {
-
-        Debug.Log("Unit Update..");
         if ((Input.GetMouseButtonDown(0)))
         {
             RaycastHit hit;
@@ -45,8 +42,9 @@ public class Unit : MonoBehaviour
             if (Physics.Raycast(ray, out hit))
             {
                 target = hit.point;
+                star.SetActive(true);
+                star.transform.position = target;
                 Debug.Log("Unit moving to " + target);
-                Debug.Log(target);
                 StartCoroutine("UpdatePath");
             }
 

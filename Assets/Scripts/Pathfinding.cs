@@ -80,7 +80,7 @@ public class Pathfinding : MonoBehaviour
                 exploredDictionary.Add(iterator, new List<Node>(exploredSet));
                 exploredSet.Clear();
                 iterator++;
-
+                
             }
         }
         if (pathSuccess)
@@ -89,7 +89,6 @@ public class Pathfinding : MonoBehaviour
             pathSuccess = waypoints.Count > 0;
         }
         callback(new PathResult(waypoints, exploredDictionary, pathSuccess, request.callback));
-
     }
 
     List<Node> RetracePath(Node startNode, Node endNode)
