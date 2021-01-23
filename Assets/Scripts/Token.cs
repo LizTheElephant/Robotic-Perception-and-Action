@@ -12,12 +12,41 @@ public class Token : MonoBehaviour
     bool wasChosen;
     float fadeDuration;
 
+    Mesh m;
+    MeshFilter mf;
+
+    private void Start()
+    {
+        Debug.Log("Start");
+        mf =  (MeshFilter)gameObject.GetComponent("MeshFilter");
+        m = new  Mesh();
+        mf.mesh = m;
+        DrawTriangle();
+    }
+
+    private void DrawTriangle()
+    {
+        Debug.Log("Drawing triangles");
+        Vector3[] vertices = new Vector3[3];
+        int[] triangles = new int[3];
+
+        vertices[0] = new Vector3(0,1,0);
+        vertices[1] = new Vector3(-1,0,0);
+        vertices[2] = new Vector3(1,0,0);
+
+        triangles[0] = 0;
+        triangles[1] = 1;
+        triangles[2] = 2;
+
+        m.vertices = vertices;
+        m.triangles = triangles;
+    }
+
     void Awake()
     {
         wasChosen = false;
         rend = GetComponent<Renderer>();
         rend.material = exploredAreaMaterial;
-
     }
 
     public void SetColorCode(float value, int min, int max)

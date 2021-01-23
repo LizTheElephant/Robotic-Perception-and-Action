@@ -35,6 +35,7 @@ public class Node : IHeapItem<Node>
 
 
         _token.transform.position = _worldPos + Vector3.up * 0.2f;
+        _token.transform.Rotate(-90.0f, 0.0f, 0.0f, Space.Self);
         _token.SetActive(false);
         token = _token;
 
