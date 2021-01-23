@@ -28,7 +28,6 @@ public class Unit : MonoBehaviour
         star = GameObject.Find("Star");
     }
 
-    // Update is called once per frame
     void Update()
     {
         if ((Input.GetMouseButtonDown(0)))
@@ -54,6 +53,24 @@ public class Unit : MonoBehaviour
             Debug.Log("Unit Update: Starting..");
         }
 
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        Debug.Log("Collided with " + collision.gameObject.name + ".");
+        if (collision.gameObject.CompareTag("Respawn") || collision.gameObject == star)
+        {
+            star.SetActive(false);
+        }
+    }
+    
+    private void OnTriggerEnter(Collider collider)
+    {
+        Debug.Log("Collision triggered with with " + collider.gameObject.name + ".");
+        if (collider.gameObject.CompareTag("Respawn") || collider.gameObject == star)
+        {
+            star.SetActive(false);
+        }
     }
 
     public void OnPathFound(List<Node> waypoints, Dictionary<int, List<Node>> exploredSet, bool pathSuccessful)
@@ -110,7 +127,6 @@ public class Unit : MonoBehaviour
         while (true)
         {
 
-
             yield return new WaitForSeconds(minPathUpdateTime);
             //print (((target.position - targetPosOld).sqrMagnitude) + "    " + sqrMoveThreshold);
             if ((target - targetPosOld).sqrMagnitude > sqrMoveThreshold)
@@ -160,7 +176,7 @@ public class Unit : MonoBehaviour
                 if (pathIndex >= path.slowDownIndex && stoppingDst > 0)
                 {
                     speedPercent = Mathf.Clamp01(path.turnBoundaries[path.finishLineIndex].DistanceFromPoint(pos2D) / stoppingDst);
-                    if (speedPercent < 0.01f)
+                    if (speedPercent < 0.03f)
                     {
                         followingPath = false;
                     }
@@ -173,7 +189,6 @@ public class Unit : MonoBehaviour
             }
             //wait one frame
             yield return null;
-
         }
     }
 

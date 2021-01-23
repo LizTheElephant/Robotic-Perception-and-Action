@@ -24,17 +24,9 @@ public class Token : MonoBehaviour
     {
         //Debug.LogWarning("Value: " + value + ", Min: " + min + ", Max: " + max);
         int diff = (max - min) / 2;
-        Color color;
-
-        if (value < diff)
-        {
-            color = Color.Lerp(Color.yellow, Color.red, Mathf.InverseLerp(min, diff, value));
-        }
-        else
-        {
-            color = Color.Lerp(Color.red, Color.magenta, Mathf.InverseLerp(diff, max, value));
-        }
-        rend.material.color = color;
+        rend.material.color = value < diff ? 
+            Color.Lerp(Color.yellow, Color.red, Mathf.InverseLerp(min, diff, value)) :
+            Color.Lerp(Color.red, Color.magenta, Mathf.InverseLerp(diff, max, value));
 
         /*
         Color[] colors = new Color[] { Color.red, Color.magenta, Color.blue, Color.cyan, Color.green, Color.yellow, Color.red };
