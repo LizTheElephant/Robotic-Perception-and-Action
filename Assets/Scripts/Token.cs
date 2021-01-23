@@ -29,8 +29,7 @@ public class Token : MonoBehaviour
         Debug.Log("Drawing triangles");
         Vector3[] vertices = new Vector3[3];
         int[] triangles = new int[3];
-
-        vertices[0] = new Vector3(0,1,0);
+        vertices[0] = new Vector3(0,0,-1);
         vertices[1] = new Vector3(-1,0,0);
         vertices[2] = new Vector3(1,0,0);
 
@@ -40,6 +39,8 @@ public class Token : MonoBehaviour
 
         m.vertices = vertices;
         m.triangles = triangles;
+        
+        //transform.RotateAround(transform.position, Vector3.up, 90);
     }
 
     void Awake()
@@ -76,6 +77,7 @@ public class Token : MonoBehaviour
         wasChosen = true;
         this.gameObject.SetActive(true); 
         rend.material = chosenPathMaterial;
+        transform.RotateAround(transform.position, Vector3.up, 180);
     }
 
     public void Reset()
@@ -84,6 +86,7 @@ public class Token : MonoBehaviour
         wasChosen = false;
         this.gameObject.SetActive(false);
         rend.material = exploredAreaMaterial;
+        transform.rotation = Quaternion.Euler(0, 0, 0);
     }
 
     public void Dissolve()
@@ -99,6 +102,12 @@ public class Token : MonoBehaviour
             fadeDuration = surroundingFadeDuration;
             StartCoroutine("FadeAndDestroy");
         }
+    }
+
+    public void RotateTowardsParent(GameObject parent) {
+        var lookPos = parent.transform.position - transform.position;
+        float angle = Mathf.Atan2(lookPos.x, lookPos.z) * Mathf.Rad2Deg;
+        transform.RotateAround(transform.position, Vector3.up, angle);
     }
 
     IEnumerator FadeAndDestroy() {

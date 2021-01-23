@@ -226,11 +226,4 @@ public class Unit : MonoBehaviour
         yield return null;
     }
 
-
-    public void OnDrawGizmos()
-    {
-
-        if (path != null)
-            path.DrawWithGizmos();
-    }
 }

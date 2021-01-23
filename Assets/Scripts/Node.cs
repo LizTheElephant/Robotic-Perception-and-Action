@@ -33,9 +33,7 @@ public class Node : IHeapItem<Node>
         gridY = _gridY;
         movementPenalty = _penalty;
 
-
         _token.transform.position = _worldPos + Vector3.up * 0.2f;
-        _token.transform.Rotate(-90.0f, 0.0f, 0.0f, Space.Self);
         _token.SetActive(false);
         token = _token;
 
@@ -81,11 +79,11 @@ public class Node : IHeapItem<Node>
 
     public void ExploreNode()
     {
-
         token.SetActive(true);
         if (script == null)
             script = token.GetComponent<Token>();
         script.SetColorCode(fCost, fCostMin, fCostMax);
+        script.RotateTowardsParent(parent.token);        
         script.DissolveSurrounding();
     }
     public void ChooseAsPath()
