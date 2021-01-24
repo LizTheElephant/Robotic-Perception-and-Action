@@ -2753,6 +2753,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7666986768240843510, guid: 9fedecbd1aa68924b816f15cb97e611a,
+        type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9fedecbd1aa68924b816f15cb97e611a, type: 3}
 --- !u!1001 &289230055
@@ -10313,7 +10318,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 994060396}
   m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 6, z: 0}
+  m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 2013073072}
@@ -12358,26 +12363,27 @@ MonoBehaviour:
       m_Bits: 1024
     terrainPenalty: 0
     terrainFuelConsumption: 0
-    priority: 2
+    countPenaltyIdx: 0
   - layerMask:
       serializedVersion: 2
       m_Bits: 512
     terrainPenalty: 10
     terrainFuelConsumption: 50
-    priority: 1
+    countPenaltyIdx: 2
   - layerMask:
       serializedVersion: 2
       m_Bits: 2048
     terrainPenalty: 500
     terrainFuelConsumption: 10
-    priority: 0
+    countPenaltyIdx: 1
   unwalkableMask:
     serializedVersion: 2
     m_Bits: 256
   prefab: {fileID: 8611615961956431445, guid: 08be5ac1d368a81749c71377c10b3faf, type: 3}
   gridWorldSize: {x: 100, y: 100}
-  nodeRadius: 2
+  nodeRadius: 1
   obstacleProximityPenalty: 10
+  blurSize: 1
 --- !u!1 &1166053523 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1694894201118028, guid: 6dcae7204dd466c4c862bc640ea7c02e,

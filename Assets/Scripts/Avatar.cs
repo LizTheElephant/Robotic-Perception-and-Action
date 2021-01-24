@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -11,20 +12,19 @@ public class Avatar : MonoBehaviour
     const float pathUpdateMoveThreshold = .5f;
     const int exploredTokenOffset = 5;
 
-    Vector3 target;
+    public GameObject target;
     public float speed = 15;
     public float turnSpeed = 3;
     public float turnDst = 5;
     public float stoppingDst = 10;
 
     private Path path;
+    private Vector3 targetPoint;
     private bool followingPath;
-    private GameObject star;
-
+    
     void Start()
     {
-        star = GameObject.Find("Star");
-        star.SetActive(false);
+        target.SetActive(false);
     }
 
     void Update()
@@ -36,10 +36,10 @@ public class Avatar : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit))
             {
-                target = hit.point;
-                star.SetActive(true);
-                star.transform.position = new Vector3(target[0], star.transform.position.y, target[2]);
-                Debug.Log("Avatar moving to " + target);
+                targetPoint = hit.point;
+                target.SetActive(true);
+                target.transform.position = new Vector3(targetPoint[0], target.transform.position.y, targetPoint[2]);
+                Debug.Log("Avatar moving to " + targetPoint);
 
                 StartCoroutine("UpdatePath");
             } else {
@@ -51,9 +51,9 @@ public class Avatar : MonoBehaviour
     private void OnTriggerEnter(Collider collider)
     {
         Debug.Log("Collision with " + collider.gameObject.name + ".");
-        if (collider.gameObject.CompareTag("Respawn") || collider.gameObject == star)
+        if (collider.gameObject.CompareTag("Respawn") || collider.gameObject == target)
         {
-            star.SetActive(false);
+            target.SetActive(false);
             // immediately dissolve remaining tokens
             if (path != null)
             {
@@ -85,25 +85,24 @@ public class Avatar : MonoBehaviour
 
     IEnumerator UpdatePath()
     {
-
         //the first few frames in unity can have large delta time values.
         //therefore the followpath accurracy is very low right after hitting play
         if (Time.timeSinceLevelLoad < .3f)
         {
             yield return new WaitForSeconds(.3f);
         }
-        PathRequestManager.RequestPath(new PathRequest(transform.position, target, OnPathFound));
+        PathRequestManager.RequestPath(new PathRequest(transform.position, targetPoint, OnPathFound));
 
         float sqrMoveThreshold = pathUpdateMoveThreshold * pathUpdateMoveThreshold;
-        Vector3 targetPosOld = target;
+        Vector3 targetPointPosOld = targetPoint;
 
         while (true)
         {
             yield return new WaitForSeconds(minPathUpdateTime);
-            if ((target - targetPosOld).sqrMagnitude > sqrMoveThreshold)
+            if ((targetPoint - targetPointPosOld).sqrMagnitude > sqrMoveThreshold)
             {
-                PathRequestManager.RequestPath(new PathRequest(transform.position, target, OnPathFound));
-                targetPosOld = target;
+                PathRequestManager.RequestPath(new PathRequest(transform.position, targetPoint, OnPathFound));
+                targetPointPosOld = targetPoint;
             }
         }
     }
@@ -147,8 +146,8 @@ public class Avatar : MonoBehaviour
                         followingPath = false;
                     }
                 }
-                Quaternion targetRotation = Quaternion.LookRotation(path.lookPoints[pathIndex].worldPosition - transform.position);
-                transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * turnSpeed);
+                Quaternion targetPointRotation = Quaternion.LookRotation(path.lookPoints[pathIndex].worldPosition - transform.position);
+                transform.rotation = Quaternion.Lerp(transform.rotation, targetPointRotation, Time.deltaTime * turnSpeed);
                 transform.Translate(Vector3.forward * Time.deltaTime * speed * speedPercent, Space.Self);
             }
             yield return null;
@@ -171,10 +170,10 @@ public class Avatar : MonoBehaviour
 
     IEnumerator DrawPath()
     {
-        //draw path from target back to start
-        for (int i = path.lookPoints.Count - 1; i >= 0; i--)
+        //draw path from targetPoint back to targett
+        foreach (Node step in path.lookPoints.Select(x => x).Reverse())
         {
-            path.lookPoints[i].ChooseAsPath();
+            step.ChooseAsPath();
             yield return new WaitForSeconds(0.1f);
         }
         StartCoroutine("FollowPath");

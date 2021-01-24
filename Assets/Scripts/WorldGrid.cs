@@ -18,7 +18,7 @@ public class WorldGrid : MonoBehaviour
         public LayerMask layerMask;
         public int terrainPenalty;
         public int terrainFuelConsumption;
-        public int priority;
+        public int countPenaltyIdx;
         
         public int GetPenalty(PathPlanningPriority priority)
         {
@@ -38,15 +38,13 @@ public class WorldGrid : MonoBehaviour
     public PathPlanningPriority priority;
     public TerrainType[] walkableRegions;
     public LayerMask unwalkableMask;
-
     public GameObject prefab;
     
     public Vector2 gridWorldSize;
     public float nodeRadius;
     public int obstacleProximityPenalty = 10;
+    public int blurSize = 1;
 
-    public List<Node> exploredNodes = new List<Node>();
-    private Dictionary<int, int> walkableRegionsDictionary = new Dictionary<int, int>();
     private Node[,] grid;
     private float nodeDiameter;
     private int gridSizeX;
@@ -64,46 +62,49 @@ public class WorldGrid : MonoBehaviour
         grid = new Node[gridSizeX, gridSizeY];
 
         Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridWorldSize.y / 2;
-        Array.Sort(walkableRegions, delegate(TerrainType x,TerrainType y) { return -x.priority.CompareTo(y.priority); });
+        Array.Sort(walkableRegions, delegate(TerrainType x,TerrainType y) { return x.countPenaltyIdx.CompareTo(y.countPenaltyIdx); });
 
-        //collision check
+        // populate grid
         for (int x = 0; x < gridSizeX; x++)
         {
             for (int y = 0; y < gridSizeY; y++)
             {
-                Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
-                
-                //collision with objects inside the unwalkable layer?
-                bool collision = Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask);
-                int movementPenalty = 0;
-
-                RaycastHit hit;
-                Debug.DrawRay(worldPoint + (1000 * Vector3.up), Vector3.down, Color.cyan);
-                
-                foreach(TerrainType region in walkableRegions) {
-                    if (Physics.Raycast(worldPoint + (1000 * Vector3.up), Vector3.down, out hit, Mathf.Infinity, region.layerMask))  {
-                        movementPenalty = region.GetPenalty(priority);
-                        worldPoint.y += (0.5f + hit.point.y);
-                        break;
-                    }
-                }
-                
-
-                movementPenalty += collision ? obstacleProximityPenalty : 0;
-                GameObject token = Instantiate(prefab, worldPoint, Quaternion.identity) as GameObject;
-                token.name = "Token: " + x + ", " + y;
-                
-                grid[x, y] = new Node(!collision, worldPoint, x, y, movementPenalty, token);
+                grid[x, y] = CreateNodeAtIndex(worldBottomLeft, x, y);
             }
         }
+        BlurPenaltyMap();
+    }
 
-        // BlurPenaltyMap(2);
+    private Node CreateNodeAtIndex(Vector3 worldBottomLeft, int x, int y)
+    {
+        Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
 
+        bool collision = Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask);
+        // proximity penalty will effect neighboring nodes after blurring the map
+        int movementPenalty = collision ? obstacleProximityPenalty : 0;
+
+        RaycastHit hit;
+        // count only movement penalty of layer with lowest countPenaltyIdx
+        foreach(TerrainType region in walkableRegions) {
+            if (Physics.Raycast(worldPoint + (1000 * Vector3.up), Vector3.down, out hit, Mathf.Infinity, region.layerMask))  {
+                movementPenalty += region.GetPenalty(priority);
+                worldPoint.y += (0.5f + hit.point.y);
+                break;
+            }
+        }
+        GameObject token = Instantiate(prefab, worldPoint, Quaternion.identity) as GameObject;
+        token.name =  $"Token: {x}, {y}";
+        
+        return new Node(!collision, worldPoint, x, y, movementPenalty, token, nodeRadius);
     }
 
     //smooth weights
-    void BlurPenaltyMap(int blurSize)
+    private void BlurPenaltyMap()
     {
+        if (blurSize <= 0)
+        {
+            return;
+        }
         int kernelSize = blurSize * 2 + 1;
         int kernelExtents = (kernelSize - 1) / 2;
 
@@ -161,14 +162,17 @@ public class WorldGrid : MonoBehaviour
             {
 
                 if (x == 0 && y == 0)
-                    continue; //current node
+                {
+                    // current node
+                    continue;
+                }
 
                 int checkX = node.gridX + x;
                 int checkY = node.gridY + y;
 
-                //if inside the grid
                 if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY)
                 {
+                    // inside the grid
                     neighbours.Add(grid[checkX, checkY]);
                 }
             }

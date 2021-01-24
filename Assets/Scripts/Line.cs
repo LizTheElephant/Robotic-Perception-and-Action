@@ -4,7 +4,6 @@ using UnityEngine;
 
 public struct Line
 {
-
     const float verticalLineGradient = 1e5f;
 
     float gradient;

@@ -25,7 +25,7 @@ public class Node : IHeapItem<Node>
 
     public GameObject token;
 
-    public Node(bool _walkable, Vector3 _worldPos, int _gridX, int _gridY, int _penalty, GameObject _token)
+    public Node(bool _walkable, Vector3 _worldPos, int _gridX, int _gridY, int _penalty, GameObject _token, float _diameter)
     {
         walkable = _walkable;
         worldPosition = _worldPos;
@@ -36,6 +36,8 @@ public class Node : IHeapItem<Node>
         _token.transform.position = _worldPos;
         _token.SetActive(false);
         token = _token;
+
+        token.transform.localScale *= _diameter;
     }
 
     public int fCost
