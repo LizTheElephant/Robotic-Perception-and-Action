@@ -35,8 +35,6 @@ public class PathRequestManager : MonoBehaviour
 
     public static void RequestPath(PathRequest request)
     {
-        print("Path: " + request.pathStart + ", " + request.pathEnd);
-
         ThreadStart threadStart = delegate {
             instance.pathfinding.FindPath(request, instance.FinishedProcessingPath);
         };

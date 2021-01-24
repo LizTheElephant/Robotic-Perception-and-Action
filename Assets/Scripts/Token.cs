@@ -6,41 +6,30 @@ public class Token : MonoBehaviour
 
     public Material chosenPathMaterial;
     public Material exploredAreaMaterial;
-    public float surroundingFadeDuration = 5f;
+    public float exploredFaceDuration = 5f;
     public float pathFadeDuration = 3f;
-    Renderer rend;
-    bool wasChosen;
-    float fadeDuration;
+    public float scalingFactor = 10f;
+    
+    private Renderer rend;
 
-    Mesh m;
-    MeshFilter mf;
+    private bool wasChosen;
+    private float fadeDuration;
+    private Color[] colors = new Color[] { Color.red, Color.magenta, Color.blue, Color.cyan, Color.green, Color.yellow, Color.red };
+
 
     private void Start()
     {
-        Debug.Log("Start");
-        mf =  (MeshFilter)gameObject.GetComponent("MeshFilter");
-        m = new  Mesh();
+        // Draw token mesh as triangle
+        Mesh m = new  Mesh();
+        m.vertices = new [] {
+            new Vector3(0,0,-1),
+            new Vector3(-1,0,0),
+            new Vector3(1,0,0)
+        };
+        m.triangles = new int[] {0, 1, 2};
+
+        MeshFilter mf = (MeshFilter)gameObject.GetComponent("MeshFilter");
         mf.mesh = m;
-        DrawTriangle();
-    }
-
-    private void DrawTriangle()
-    {
-        Debug.Log("Drawing triangles");
-        Vector3[] vertices = new Vector3[3];
-        int[] triangles = new int[3];
-        vertices[0] = new Vector3(0,0,-1);
-        vertices[1] = new Vector3(-1,0,0);
-        vertices[2] = new Vector3(1,0,0);
-
-        triangles[0] = 0;
-        triangles[1] = 1;
-        triangles[2] = 2;
-
-        m.vertices = vertices;
-        m.triangles = triangles;
-        
-        //transform.RotateAround(transform.position, Vector3.up, 90);
     }
 
     void Awake()
@@ -52,23 +41,23 @@ public class Token : MonoBehaviour
 
     public void SetColorCode(float value, int min, int max)
     {
-        //Debug.LogWarning("Value: " + value + ", Min: " + min + ", Max: " + max);
-        int diff = (max - min) / 2;
-        rend.material.color = value < diff ? 
-            Color.Lerp(Color.yellow, Color.red, Mathf.InverseLerp(min, diff, value)) :
-            Color.Lerp(Color.red, Color.magenta, Mathf.InverseLerp(diff, max, value));
-
-        /*
-        Color[] colors = new Color[] { Color.red, Color.magenta, Color.blue, Color.cyan, Color.green, Color.yellow, Color.red };
-
-        //Debug.LogWarning("Color Value prior:" + value);
-        value = value % (scalingFactor * colors.Length);
-        int minindex = (int) Mathf.Floor(value / scalingFactor);
-        int maxindex = (minindex + 1) % colors.Length;
-
-        //Debug.LogWarning("Value: " + value + ", Minindex: " + minindex + ", (Value - Minindex * 100) / 100: " + (value - minindex*100)/100);
-        Color color = Color.Lerp(colors[minindex], colors[maxindex], value / scalingFactor - minindex);
-        rend.material.color = color;*/
+        // color in a gradient representing the node's fCost relative to the global min and max fCost
+        if (scalingFactor == 0)
+        {
+            Debug.Log("Scale factor " + scalingFactor + ": visualize as simple color gradient in between yellow and magenta");
+            int diff = (max - min) / 2;
+            rend.material.color = value < diff ? 
+                Color.Lerp(Color.yellow, Color.red, Mathf.InverseLerp(min, diff, value)) :
+                Color.Lerp(Color.red, Color.magenta, Mathf.InverseLerp(diff, max, value));        
+        } 
+        else
+        {
+            Debug.Log("Scale factor " + scalingFactor + ": visualize as complex color gradient.");    
+            value = value % (scalingFactor * colors.Length);
+            int minindex = (int) Mathf.Floor(value / scalingFactor);
+            int maxindex = (minindex + 1) % colors.Length;
+            rend.material.color = Color.Lerp(colors[minindex], colors[maxindex], value / scalingFactor - minindex);
+        }
     }
 
     public void SetAsChosenPath()
@@ -91,15 +80,18 @@ public class Token : MonoBehaviour
 
     public void Dissolve()
     {
-        fadeDuration = pathFadeDuration;
-        StartCoroutine("FadeAndDestroy");
+        if (this.gameObject.activeSelf)
+        {
+            fadeDuration = pathFadeDuration;
+            StartCoroutine("FadeAndDestroy");
+        }
     }
 
     public void DissolveSurrounding()
     {
         if (!wasChosen)
         {
-            fadeDuration = surroundingFadeDuration;
+            fadeDuration = exploredFaceDuration;
             StartCoroutine("FadeAndDestroy");
         }
     }
@@ -116,20 +108,17 @@ public class Token : MonoBehaviour
         float targetOpacity = 0.0f;
         float t = 0;
 
+            
         while (t < fadeDuration)
         {
             t += Time.deltaTime;
-            float blend = Mathf.Clamp01(t / fadeDuration);
-
-            color.a = Mathf.Lerp(startOpacity, targetOpacity, blend);
+            color.a = Mathf.Lerp(startOpacity, targetOpacity, Mathf.Clamp01(t / fadeDuration));
             rend.material.color = color;
             yield return null;
         }
 
         this.gameObject.SetActive(false);
         color.a = 1;
-        Reset();
-
     }
 
 }

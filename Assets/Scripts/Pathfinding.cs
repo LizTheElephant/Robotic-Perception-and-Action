@@ -17,9 +17,6 @@ public class Pathfinding : MonoBehaviour
 
     public void FindPath(PathRequest request, Action<PathResult> callback)
     {
-
-        print("Pathfinder finding path");
-
         Dictionary<int, List<Node>> exploredDictionary =
             new Dictionary<int, List<Node>>();
 
@@ -44,7 +41,6 @@ public class Pathfinding : MonoBehaviour
                 Node currentNode = openSet.RemoveFirst();
 
                 closedSet.Add(currentNode);
-                //print ("openset:" + openSet.Count);
                 if (currentNode == targetNode)
                 {
                     pathSuccess = true;

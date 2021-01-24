@@ -35,27 +35,21 @@ public class Grid : MonoBehaviour
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
         gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
 
-
         foreach (TerrainType region in walkableRegions)
         {
-            Debug.Log("Region " + region + "is walkable");
-            walkableMask.value |= region.terrainMask.value;
+            int layerIndex = (int)Mathf.Log(region.terrainMask.value, 2);
+            Debug.Log("Layer " + LayerMask.LayerToName(layerIndex) + " is walkable");
+            
+            walkableMask |= region.terrainMask;
+            
             int penalty = 1;
             if (Priority == PathPlanningPriority.SmallestFuelConsumption)
                 penalty = region.terrainFuelConsumption;
             else if (Priority == PathPlanningPriority.ShortestTime)
                 penalty = region.terrainPenalty;
-            walkableRegionsDictionary.Add((int)Mathf.Log(region.terrainMask.value, 2), penalty);
+            walkableRegionsDictionary.Add(layerIndex, penalty);
         }
         CreateGrid();
-    }
-
-    public int MaxSize
-    {
-        get
-        {
-            return gridSizeX * gridSizeY;
-        }
     }
 
     void CreateGrid()
@@ -72,21 +66,22 @@ public class Grid : MonoBehaviour
             for (int y = 0; y < gridSizeY; y++)
             {
                 Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
-                //CheckSphere returns true if there is a collision with objects inside the unwalkable layer
+                
+                //collision with objects inside the unwalkable layer?
                 bool collision = Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask);
                 int movementPenalty = 0;
 
-
-                Ray ray = new Ray(worldPoint + Vector3.up * 50, Vector3.down);
                 RaycastHit hit;
-                if (Physics.Raycast(ray, out hit, 100, walkableMask))
+                Debug.DrawRay(worldPoint + (1000 * Vector3.up), Vector3.down, Color.cyan);
+                if (Physics.Raycast(worldPoint + (1000 * Vector3.up), Vector3.down, out hit, Mathf.Infinity, walkableMask))  {
                     walkableRegionsDictionary.TryGetValue(hit.collider.gameObject.layer, out movementPenalty);
+                    worldPoint.y += (0.5f + hit.point.y);
+                }
 
-                if (collision)
-                    movementPenalty += obstacleProximityPenalty;
-
-                GameObject token = Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
+                movementPenalty += collision ? obstacleProximityPenalty : 0;
+                GameObject token = Instantiate(prefab, worldPoint, Quaternion.identity) as GameObject;
                 token.name = "Token: " + x + ", " + y;
+                
                 grid[x, y] = new Node(!collision, worldPoint, x, y, movementPenalty, token);
             }
         }
@@ -142,13 +137,9 @@ public class Grid : MonoBehaviour
                 grid[x, y].movementPenalty = blurredPenalty;
 
                 if (blurredPenalty > penaltyMax)
-                {
                     penaltyMax = blurredPenalty;
-                }
                 if (blurredPenalty < penaltyMin)
-                {
                     penaltyMin = blurredPenalty;
-                }
             }
         }
 
@@ -184,11 +175,10 @@ public class Grid : MonoBehaviour
     {
         float percentX = (worldPosition.x + gridWorldSize.x / 2) / gridWorldSize.x;
         float percentY = (worldPosition.z + gridWorldSize.y / 2) / gridWorldSize.y;
-        percentX = Mathf.Clamp01(percentX);
-        percentY = Mathf.Clamp01(percentY);
-
-        int x = Mathf.RoundToInt((gridSizeX - 1) * percentX);
-        int y = Mathf.RoundToInt((gridSizeY - 1) * percentY);
+       
+        int x = Mathf.RoundToInt((gridSizeX - 1) * Mathf.Clamp01(percentX));
+        int y = Mathf.RoundToInt((gridSizeY - 1) * Mathf.Clamp01(percentY));
+       
         return grid[x, y];
     }
 
@@ -231,6 +221,14 @@ public class Grid : MonoBehaviour
             }
         }
         return new Vector2(minFCost, maxFCost);
+    }
+
+    public int MaxSize
+    {
+        get
+        {
+            return gridSizeX * gridSizeY;
+        }
     }
 
 

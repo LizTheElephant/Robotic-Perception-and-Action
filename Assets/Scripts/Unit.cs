@@ -9,6 +9,7 @@ public class Unit : MonoBehaviour
 
     const float minPathUpdateTime = .2f;
     const float pathUpdateMoveThreshold = .5f;
+    const int exploredTokenOffset = 5;
 
     //public Transform target;
     Vector3 target;
@@ -17,11 +18,9 @@ public class Unit : MonoBehaviour
     public float turnDst = 5;
     public float stoppingDst = 10;
 
-
-    Path path;
-    const int exploredTokenOffset = 5;
-    bool followingPath;
-    GameObject star;
+    private Path path;
+    private bool followingPath;
+    private GameObject star;
 
     void Start()
     {
@@ -33,43 +32,37 @@ public class Unit : MonoBehaviour
         if ((Input.GetMouseButtonDown(0)))
         {
             RaycastHit hit;
-            Ray ray;
-            ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-
-            Debug.LogWarning("MousePosition" + ray) ;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
             if (Physics.Raycast(ray, out hit))
             {
                 target = hit.point;
                 star.SetActive(true);
-                star.transform.position = target;
+                star.transform.position = new Vector3(target[0], star.transform.position.y, target[2]);
                 Debug.Log("Unit moving to " + target);
+
                 StartCoroutine("UpdatePath");
+            } else {
+                Debug.LogWarning("Cannot walk here");
             }
-
-        }
-        if (!Mathf.Approximately(gameObject.transform.position.magnitude, target.magnitude))
-        {
-            Debug.Log("Unit Update: Starting..");
-        }
-
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        Debug.Log("Collided with " + collision.gameObject.name + ".");
-        if (collision.gameObject.CompareTag("Respawn") || collision.gameObject == star)
-        {
-            star.SetActive(false);
         }
     }
     
     private void OnTriggerEnter(Collider collider)
     {
-        Debug.Log("Collision triggered with with " + collider.gameObject.name + ".");
+        Debug.Log("Collision triggered with " + collider.gameObject.name + ".");
         if (collider.gameObject.CompareTag("Respawn") || collider.gameObject == star)
         {
             star.SetActive(false);
+            // immediately dissolve remaining tokens
+            if (path != null)
+            {
+                Token script;
+                foreach (Node n in path.lookPoints) {
+                        script = n.token.GetComponent<Token>();
+                        script.Dissolve();
+                }
+            }
         }
     }
 
@@ -78,32 +71,13 @@ public class Unit : MonoBehaviour
 
         if (pathSuccessful)
         {
-            Debug.Log("Unit found Path");
             StopCoroutine("FollowPath");
             StopCoroutine("ShowExploredArea");
             StopCoroutine("DrawPath");
             StopCoroutine("DissolveSurrounding");
-
-            if (path != null)
-            {
-                foreach (KeyValuePair<int, List<Node>> entry in path.exploredSet)
-                {
-                    foreach (Node n in entry.Value)
-                    {
-                        n.Reset();
-                    }
-                }
-                foreach (Node n in path.lookPoints)
-                {
-                    n.Reset();
-                }
-
-            }
-
-
+            
+            ResetAllNodes();
             path = new Path(waypoints, exploredSet, transform.position, turnDst, stoppingDst);
-            print("path found: " + exploredSet.Count);
-
             followingPath = false;
             StartCoroutine("ShowExploredArea");
         }
@@ -112,7 +86,6 @@ public class Unit : MonoBehaviour
     IEnumerator UpdatePath()
     {
 
-        Debug.Log("Unit Updated Path");
         //the first few frames in unity can have large delta time values.
         //therefore the followpath accurracy is very low right after hitting play
         if (Time.timeSinceLevelLoad < .3f)
@@ -126,9 +99,7 @@ public class Unit : MonoBehaviour
 
         while (true)
         {
-
             yield return new WaitForSeconds(minPathUpdateTime);
-            //print (((target.position - targetPosOld).sqrMagnitude) + "    " + sqrMoveThreshold);
             if ((target - targetPosOld).sqrMagnitude > sqrMoveThreshold)
             {
                 PathRequestManager.RequestPath(new PathRequest(transform.position, target, OnPathFound));
@@ -137,22 +108,18 @@ public class Unit : MonoBehaviour
         }
     }
 
-
     IEnumerator FollowPath()
     {
-
-        Debug.Log("Unit follows Path");
         followingPath = true;
         int pathIndex = 0;
-        transform.LookAt(path.lookPoints[0].worldPosition);
-
         float speedPercent = 1;
-
         Token script;
+        transform.LookAt(path.lookPoints[0].worldPosition);
 
         while (followingPath)
         {
             Vector2 pos2D = new Vector2(transform.position.x, transform.position.z);
+
             //in case we pass multiple turn boundaries per frame
             while (path.turnBoundaries[pathIndex].HasCrossedLine(pos2D))
             {
@@ -172,7 +139,6 @@ public class Unit : MonoBehaviour
 
             if (followingPath)
             {
-
                 if (pathIndex >= path.slowDownIndex && stoppingDst > 0)
                 {
                     speedPercent = Mathf.Clamp01(path.turnBoundaries[path.finishLineIndex].DistanceFromPoint(pos2D) / stoppingDst);
@@ -184,26 +150,20 @@ public class Unit : MonoBehaviour
                 Quaternion targetRotation = Quaternion.LookRotation(path.lookPoints[pathIndex].worldPosition - transform.position);
                 transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * turnSpeed);
                 transform.Translate(Vector3.forward * Time.deltaTime * speed * speedPercent, Space.Self);
-
-
             }
-            //wait one frame
             yield return null;
         }
     }
 
     IEnumerator ShowExploredArea()
     {
-
-        Debug.Log("Unit shows Explored Area");
-
         foreach (KeyValuePair<int, List<Node>> entry in path.exploredSet)
         {
             foreach (Node n in entry.Value)
             {
                 n.ExploreNode();
             }
-            yield return null; //new WaitForSeconds(0.03f);
+            yield return null;
         }
         StartCoroutine("DrawPath");
         yield return null;
@@ -211,19 +171,30 @@ public class Unit : MonoBehaviour
 
     IEnumerator DrawPath()
     {
-
-        Debug.Log("Unit draws Path");
-
+        //draw path from target back to start
         for (int i = path.lookPoints.Count - 1; i >= 0; i--)
         {
             path.lookPoints[i].ChooseAsPath();
-            yield return new WaitForSeconds(0.1f); // time delay for 2 seconds
+            yield return new WaitForSeconds(0.1f);
         }
-
         StartCoroutine("FollowPath");
-
-        //wait one frame
         yield return null;
     }
 
+    private void ResetAllNodes() {
+        if (path != null)
+        {
+            foreach (KeyValuePair<int, List<Node>> entry in path.exploredSet)
+            {
+                foreach (Node n in entry.Value)
+                {
+                    n.Reset();
+                }
+            }
+            foreach (Node n in path.lookPoints)
+            {
+                n.Reset();
+            }
+        }
+    }
 }
