@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class Grid : MonoBehaviour
+public class WorldGrid : MonoBehaviour
 {
     public bool displayGridGizmos;
     public bool displayGridWeights;
@@ -22,18 +23,23 @@ public class Grid : MonoBehaviour
     Node[,] grid; //collection of each node in the grid
     public List<Node> exploredNodes;
 
-    float nodeDiameter;
-    int gridSizeX, gridSizeY;
-
-    int penaltyMin = int.MaxValue;
-    int penaltyMax = int.MinValue;
+    float nodeDiameter = 1f;
+    int gridSizeX = 100;
+    int gridSizeY = 100;
 
     void Awake()
     {
-        //how many nodes can fit into this world
         nodeDiameter = nodeRadius * 2;
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
         gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
+
+        GameObject prefab = Resources.Load("Prefabs/Token") as GameObject;
+
+        grid = new Node[gridSizeX, gridSizeY];
+        exploredNodes = new List<Node>();
+        Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridWorldSize.y / 2;
+        
+        Array.Sort(walkableRegions, delegate(TerrainType x,TerrainType y) { return -x.priority.CompareTo(y.priority); });
 
         foreach (TerrainType region in walkableRegions)
         {
@@ -44,22 +50,17 @@ public class Grid : MonoBehaviour
             
             int penalty = 1;
             if (Priority == PathPlanningPriority.SmallestFuelConsumption)
+            {
                 penalty = region.terrainFuelConsumption;
-            else if (Priority == PathPlanningPriority.ShortestTime)
+            }    
+            else if (Priority == PathPlanningPriority.ShortestTime) 
+            {
                 penalty = region.terrainPenalty;
+            }
+
             walkableRegionsDictionary.Add(layerIndex, penalty);
         }
-        CreateGrid();
-    }
-
-    void CreateGrid()
-    {
-        GameObject prefab = Resources.Load("Prefabs/Token") as GameObject;
-
-        grid = new Node[gridSizeX, gridSizeY];
-        exploredNodes = new List<Node>();
-        Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridWorldSize.y / 2;
-
+        
         //collision check
         for (int x = 0; x < gridSizeX; x++)
         {
@@ -73,10 +74,16 @@ public class Grid : MonoBehaviour
 
                 RaycastHit hit;
                 Debug.DrawRay(worldPoint + (1000 * Vector3.up), Vector3.down, Color.cyan);
-                if (Physics.Raycast(worldPoint + (1000 * Vector3.up), Vector3.down, out hit, Mathf.Infinity, walkableMask))  {
-                    walkableRegionsDictionary.TryGetValue(hit.collider.gameObject.layer, out movementPenalty);
-                    worldPoint.y += (0.5f + hit.point.y);
+                
+                foreach(TerrainType region in walkableRegions) {
+                    if (Physics.Raycast(worldPoint + (1000 * Vector3.up), Vector3.down, out hit, Mathf.Infinity, region.terrainMask))  {
+                        walkableRegionsDictionary.TryGetValue(hit.collider.gameObject.layer, out movementPenalty);
+                        Debug.LogWarning("Movement penalty : " + movementPenalty);
+                        worldPoint.y += (0.5f + hit.point.y);
+                        break;
+                    }
                 }
+                
 
                 movementPenalty += collision ? obstacleProximityPenalty : 0;
                 GameObject token = Instantiate(prefab, worldPoint, Quaternion.identity) as GameObject;
@@ -86,7 +93,7 @@ public class Grid : MonoBehaviour
             }
         }
 
-        BlurPenaltyMap(10);
+        // BlurPenaltyMap(2);
 
     }
 
@@ -135,11 +142,6 @@ public class Grid : MonoBehaviour
                 penaltiesVerticalPass[x, y] = penaltiesVerticalPass[x, y - 1] - penaltiesHorizontalPass[x, removeIndex] + penaltiesHorizontalPass[x, addIndex];
                 blurredPenalty = Mathf.RoundToInt((float)penaltiesVerticalPass[x, y] / (kernelSize * kernelSize));
                 grid[x, y].movementPenalty = blurredPenalty;
-
-                if (blurredPenalty > penaltyMax)
-                    penaltyMax = blurredPenalty;
-                if (blurredPenalty < penaltyMin)
-                    penaltyMin = blurredPenalty;
             }
         }
 
@@ -182,31 +184,6 @@ public class Grid : MonoBehaviour
         return grid[x, y];
     }
 
-    //indicate collision areas
-    void OnDrawGizmos()
-    {
-        Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 1, gridWorldSize.y)); //y-axis represents height in 3d space
-        if (grid != null)
-        {
-            foreach (Node n in grid)
-            {
-                if (displayGridWeights)
-                {
-                    Gizmos.color = Color.Lerp(Color.white, Color.black, Mathf.InverseLerp(penaltyMin, penaltyMax, n.movementPenalty));
-                    Gizmos.color = (n.walkable) ? Gizmos.color : Color.red;
-                    Gizmos.DrawCube(n.worldPosition, Vector3.one * (nodeDiameter));
-                }
-
-                if (displayGridGizmos)
-                {
-                    Gizmos.color = (n.walkable) ? Color.white : Color.red;
-                    Gizmos.DrawCube(n.worldPosition, Vector3.one * (nodeDiameter - 0.5f));
-
-                }
-            }
-        }
-    }
-
     public Vector2 findFCostDimensions()
     {
         int maxFCost = 0, minFCost = int.MaxValue;
@@ -238,6 +215,8 @@ public class Grid : MonoBehaviour
         public LayerMask terrainMask;
         public int terrainPenalty;
         public int terrainFuelConsumption;
+        public int priority;
+
     }
 
 

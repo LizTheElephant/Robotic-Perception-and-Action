@@ -44,7 +44,6 @@ public class Token : MonoBehaviour
         // color in a gradient representing the node's fCost relative to the global min and max fCost
         if (scalingFactor == 0)
         {
-            Debug.Log("Scale factor " + scalingFactor + ": visualize as simple color gradient in between yellow and magenta");
             int diff = (max - min) / 2;
             rend.material.color = value < diff ? 
                 Color.Lerp(Color.yellow, Color.red, Mathf.InverseLerp(min, diff, value)) :
@@ -52,7 +51,6 @@ public class Token : MonoBehaviour
         } 
         else
         {
-            Debug.Log("Scale factor " + scalingFactor + ": visualize as complex color gradient.");    
             value = value % (scalingFactor * colors.Length);
             int minindex = (int) Mathf.Floor(value / scalingFactor);
             int maxindex = (minindex + 1) % colors.Length;

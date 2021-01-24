@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 
 
-public class Unit : MonoBehaviour
+public class Avatar : MonoBehaviour
 {
 
     const float minPathUpdateTime = .2f;
@@ -39,7 +39,7 @@ public class Unit : MonoBehaviour
                 target = hit.point;
                 star.SetActive(true);
                 star.transform.position = new Vector3(target[0], star.transform.position.y, target[2]);
-                Debug.Log("Unit moving to " + target);
+                Debug.Log("Avatar moving to " + target);
 
                 StartCoroutine("UpdatePath");
             } else {

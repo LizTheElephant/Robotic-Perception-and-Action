@@ -7,11 +7,11 @@ using System;
 public class Pathfinding : MonoBehaviour
 {
 
-    Grid grid;
+    WorldGrid grid;
 
     void Awake()
     {
-        grid = GetComponent<Grid>();
+        grid = GetComponent<WorldGrid>();
     }
 
 
@@ -54,6 +54,7 @@ public class Pathfinding : MonoBehaviour
                         continue;
                     }
 
+                    UnityEngine.Debug.Log("Movement penalty: " + neighbour.movementPenalty);
                     int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour) + neighbour.movementPenalty;
                     if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
                     {
