@@ -54,7 +54,6 @@ public class Pathfinding : MonoBehaviour
                         continue;
                     }
 
-                    UnityEngine.Debug.Log("Movement penalty: " + neighbour.movementPenalty);
                     int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour) + neighbour.movementPenalty;
                     if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
                     {

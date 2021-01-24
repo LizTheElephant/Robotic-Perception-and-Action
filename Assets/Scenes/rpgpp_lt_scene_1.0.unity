@@ -12351,33 +12351,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 855e868289c1843b09c78e143b2b1288, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  displayGridGizmos: 0
-  displayGridWeights: 0
-  unwalkableMask:
-    serializedVersion: 2
-    m_Bits: 256
-  gridWorldSize: {x: 100, y: 100}
-  nodeRadius: 1
+  priority: 2
   walkableRegions:
-  - terrainMask:
+  - layerMask:
       serializedVersion: 2
       m_Bits: 1024
     terrainPenalty: 0
     terrainFuelConsumption: 0
     priority: 2
-  - terrainMask:
+  - layerMask:
       serializedVersion: 2
       m_Bits: 512
     terrainPenalty: 10
     terrainFuelConsumption: 50
     priority: 1
-  - terrainMask:
+  - layerMask:
       serializedVersion: 2
       m_Bits: 2048
     terrainPenalty: 500
     terrainFuelConsumption: 10
     priority: 0
-  Priority: 2
+  unwalkableMask:
+    serializedVersion: 2
+    m_Bits: 256
+  prefab: {fileID: 8611615961956431445, guid: 08be5ac1d368a81749c71377c10b3faf, type: 3}
+  gridWorldSize: {x: 100, y: 100}
+  nodeRadius: 2
+  obstacleProximityPenalty: 10
 --- !u!1 &1166053523 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1694894201118028, guid: 6dcae7204dd466c4c862bc640ea7c02e,

@@ -11,7 +11,6 @@ public class Avatar : MonoBehaviour
     const float pathUpdateMoveThreshold = .5f;
     const int exploredTokenOffset = 5;
 
-    //public Transform target;
     Vector3 target;
     public float speed = 15;
     public float turnSpeed = 3;
@@ -51,7 +50,7 @@ public class Avatar : MonoBehaviour
     
     private void OnTriggerEnter(Collider collider)
     {
-        Debug.Log("Collision triggered with " + collider.gameObject.name + ".");
+        Debug.Log("Collision with " + collider.gameObject.name + ".");
         if (collider.gameObject.CompareTag("Respawn") || collider.gameObject == star)
         {
             star.SetActive(false);

@@ -4,63 +4,68 @@ using UnityEngine;
 
 public class WorldGrid : MonoBehaviour
 {
-    public bool displayGridGizmos;
-    public bool displayGridWeights;
+    public enum PathPlanningPriority
+    { 
+        ShortestDistance, 
+        ShortestTime, 
+        SmallestFuelConsumption, 
+        SafeDistanceFromObstacles
+    };
 
+    [System.Serializable]
+    public class TerrainType
+    {
+        public LayerMask layerMask;
+        public int terrainPenalty;
+        public int terrainFuelConsumption;
+        public int priority;
+        
+        public int GetPenalty(PathPlanningPriority priority)
+        {
+            if (priority == PathPlanningPriority.SmallestFuelConsumption)
+            {
+                return terrainFuelConsumption;
+            }    
+            else if (priority == PathPlanningPriority.ShortestTime) 
+            {
+                return terrainPenalty;
+            }
+            return 1;
+        }
+
+    }
+
+    public PathPlanningPriority priority;
+    public TerrainType[] walkableRegions;
     public LayerMask unwalkableMask;
+
+    public GameObject prefab;
+    
     public Vector2 gridWorldSize;
     public float nodeRadius;
-    public TerrainType[] walkableRegions;
-    int obstacleProximityPenalty = 10;
-    Dictionary<int, int> walkableRegionsDictionary = new Dictionary<int, int>();
-    LayerMask walkableMask;
+    public int obstacleProximityPenalty = 10;
 
-
-    public enum PathPlanningPriority { ShortestDistance, ShortestTime, SmallestFuelConsumption, SafeDistanceFromObstacles };
-
-    public PathPlanningPriority Priority;
-
-    Node[,] grid; //collection of each node in the grid
-    public List<Node> exploredNodes;
-
-    float nodeDiameter = 1f;
-    int gridSizeX = 100;
-    int gridSizeY = 100;
+    public List<Node> exploredNodes = new List<Node>();
+    private Dictionary<int, int> walkableRegionsDictionary = new Dictionary<int, int>();
+    private Node[,] grid;
+    private float nodeDiameter;
+    private int gridSizeX;
+    private int gridSizeY;
 
     void Awake()
     {
+        Debug.Assert(gridWorldSize.x > 0 && gridWorldSize.y > 0, "Grid must be larger than 0 in both dimensions.");
+        Debug.Assert(nodeRadius > 0, "Radius must be larger than 0.");
+        Debug.Assert(prefab != null, "Token must be set.");
+
         nodeDiameter = nodeRadius * 2;
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
         gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
-
-        GameObject prefab = Resources.Load("Prefabs/Token") as GameObject;
-
         grid = new Node[gridSizeX, gridSizeY];
-        exploredNodes = new List<Node>();
+
         Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridWorldSize.y / 2;
-        
         Array.Sort(walkableRegions, delegate(TerrainType x,TerrainType y) { return -x.priority.CompareTo(y.priority); });
 
-        foreach (TerrainType region in walkableRegions)
-        {
-            int layerIndex = (int)Mathf.Log(region.terrainMask.value, 2);
-            Debug.Log("Layer " + LayerMask.LayerToName(layerIndex) + " is walkable");
-            
-            walkableMask |= region.terrainMask;
-            
-            int penalty = 1;
-            if (Priority == PathPlanningPriority.SmallestFuelConsumption)
-            {
-                penalty = region.terrainFuelConsumption;
-            }    
-            else if (Priority == PathPlanningPriority.ShortestTime) 
-            {
-                penalty = region.terrainPenalty;
-            }
-
-            walkableRegionsDictionary.Add(layerIndex, penalty);
-        }
-        
         //collision check
         for (int x = 0; x < gridSizeX; x++)
         {
@@ -76,9 +81,8 @@ public class WorldGrid : MonoBehaviour
                 Debug.DrawRay(worldPoint + (1000 * Vector3.up), Vector3.down, Color.cyan);
                 
                 foreach(TerrainType region in walkableRegions) {
-                    if (Physics.Raycast(worldPoint + (1000 * Vector3.up), Vector3.down, out hit, Mathf.Infinity, region.terrainMask))  {
-                        walkableRegionsDictionary.TryGetValue(hit.collider.gameObject.layer, out movementPenalty);
-                        Debug.LogWarning("Movement penalty : " + movementPenalty);
+                    if (Physics.Raycast(worldPoint + (1000 * Vector3.up), Vector3.down, out hit, Mathf.Infinity, region.layerMask))  {
+                        movementPenalty = region.GetPenalty(priority);
                         worldPoint.y += (0.5f + hit.point.y);
                         break;
                     }
@@ -207,17 +211,4 @@ public class WorldGrid : MonoBehaviour
             return gridSizeX * gridSizeY;
         }
     }
-
-
-    [System.Serializable]
-    public class TerrainType
-    {
-        public LayerMask terrainMask;
-        public int terrainPenalty;
-        public int terrainFuelConsumption;
-        public int priority;
-
-    }
-
-
 }

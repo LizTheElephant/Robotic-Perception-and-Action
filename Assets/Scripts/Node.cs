@@ -88,6 +88,7 @@ public class Node : IHeapItem<Node>
 
     public void ChooseAsPath()
     {
+        token.SetActive(true);
         if (script == null)
             script = token.GetComponent<Token>();
         script.SetAsChosenPath();
