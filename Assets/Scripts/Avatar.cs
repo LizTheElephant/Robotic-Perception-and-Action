@@ -25,6 +25,7 @@ public class Avatar : MonoBehaviour
     void Start()
     {
         star = GameObject.Find("Star");
+        star.SetActive(false);
     }
 
     void Update()
