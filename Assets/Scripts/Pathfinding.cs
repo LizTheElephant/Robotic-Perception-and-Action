@@ -17,8 +17,7 @@ public class Pathfinding : MonoBehaviour
 
     public void FindPath(PathRequest request, Action<PathResult> callback)
     {
-        Dictionary<int, List<Node>> exploredDictionary =
-            new Dictionary<int, List<Node>>();
+        Dictionary<int, List<Node>> exploredDictionary = new Dictionary<int, List<Node>>();
 
         List<Node> waypoints = new List<Node>();
         bool pathSuccess = false;
