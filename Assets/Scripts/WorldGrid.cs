@@ -75,6 +75,7 @@ public class WorldGrid : MonoBehaviour
         BlurPenaltyMap();
     }
 
+
     private Node CreateNodeAtIndex(Vector3 worldBottomLeft, int x, int y)
     {
         Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
@@ -213,6 +214,13 @@ public class WorldGrid : MonoBehaviour
         get
         {
             return gridSizeX * gridSizeY;
+        }
+    }
+    public int WalkableMask
+    {
+        get
+        {
+            return ~(unwalkableMask);
         }
     }
 }

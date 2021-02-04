@@ -36,11 +36,11 @@ public class Avatar : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit))
             {
-                targetPoint = hit.point;
+                Debug.Log(hit.collider.gameObject.name);
+                targetPoint = new Vector3(hit.point[0], 0, hit.point[2]);
+                target.transform.position = hit.point;
                 target.SetActive(true);
-                target.transform.position = new Vector3(targetPoint[0], target.transform.position.y, targetPoint[2]);
                 Debug.Log("Avatar moving to " + targetPoint);
-
                 StartCoroutine("UpdatePath");
             } else {
                 Debug.LogWarning("Cannot walk here");
@@ -91,17 +91,17 @@ public class Avatar : MonoBehaviour
         {
             yield return new WaitForSeconds(.3f);
         }
-        PathRequestManager.RequestPath(new PathRequest(transform.position, targetPoint, OnPathFound));
+        PathRequestManager.RequestPath(transform.position, targetPoint, OnPathFound);
 
         float sqrMoveThreshold = pathUpdateMoveThreshold * pathUpdateMoveThreshold;
         Vector3 targetPointPosOld = targetPoint;
 
         while (true)
         {
-            yield return new WaitForSeconds(minPathUpdateTime);
+            yield return null; //new WaitForSeconds(minPathUpdateTime);
             if ((targetPoint - targetPointPosOld).sqrMagnitude > sqrMoveThreshold)
             {
-                PathRequestManager.RequestPath(new PathRequest(transform.position, targetPoint, OnPathFound));
+                PathRequestManager.RequestPath(transform.position, targetPoint, OnPathFound);
                 targetPointPosOld = targetPoint;
             }
         }

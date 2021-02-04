@@ -12555,7 +12555,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   prefab: {fileID: 8611615961956431445, guid: 08be5ac1d368a81749c71377c10b3faf, type: 3}
-  gridWorldSize: {x: 100, y: 100}
+  gridWorldSize: {x: 200, y: 200}
   nodeRadius: 1
   obstacleProximityPenalty: 10
   blurSize: 1

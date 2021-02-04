@@ -33,8 +33,9 @@ public class PathRequestManager : MonoBehaviour
         }
     }
 
-    public static void RequestPath(PathRequest request)
+    public static void RequestPath(Vector3 start, Vector3 end, Action<List<Node>, Dictionary<int, List<Node>>, bool> callback)
     {
+        PathRequest request = new PathRequest(start, end, callback);
         ThreadStart threadStart = delegate {
             instance.pathfinding.FindPath(request, instance.FinishedProcessingPath);
         };
@@ -48,9 +49,6 @@ public class PathRequestManager : MonoBehaviour
             results.Enqueue(result);
         }
     }
-
-
-
 }
 
 public struct PathResult
