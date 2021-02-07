@@ -5,22 +5,22 @@ using System.Threading;
 
 public class PathRequestManager : MonoBehaviour
 {
-
     Queue<PathResult> results = new Queue<PathResult>();
 
     static PathRequestManager instance;
-    Pathfinding pathfinding;
+    WorldGrid grid;
 
     void Awake()
     {
         instance = this;
-        pathfinding = GetComponent<Pathfinding>();
+        grid = this.gameObject.GetComponent<WorldGrid>();
     }
 
     void Update()
     {
         if (results.Count > 0)
         {
+            Debug.LogWarning("PathRequestManager Update");
             int itemsInQueue = results.Count;
             lock (results)
             {
@@ -35,9 +35,11 @@ public class PathRequestManager : MonoBehaviour
 
     public static void RequestPath(Vector3 start, Vector3 end, Action<List<Node>, Dictionary<int, List<Node>>, bool> callback)
     {
+        Debug.LogWarning("Path Requested");
         PathRequest request = new PathRequest(start, end, callback);
         ThreadStart threadStart = delegate {
-            instance.pathfinding.FindPath(request, instance.FinishedProcessingPath);
+            Debug.LogWarning("Requesting aSTAR " + instance.grid.nodeRadius);
+            Pathfinding.AStar(instance.grid, request, instance.FinishedProcessingPath);
         };
         threadStart.Invoke();
     }

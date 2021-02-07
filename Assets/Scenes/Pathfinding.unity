@@ -12943,7 +12943,6 @@ GameObject:
   - component: {fileID: 1165068692}
   - component: {fileID: 1165068696}
   - component: {fileID: 1165068691}
-  - component: {fileID: 1165068690}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -12951,18 +12950,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1165068690
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1165068689}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ceccdd2eca5974089b87e95c761e83d6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1165068691
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13062,7 +13049,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 855e868289c1843b09c78e143b2b1288, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  priority: 2
+  priority: 0
   walkableRegions:
   - layerMask:
       serializedVersion: 2
@@ -18574,7 +18561,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
 --- !u!114 &1653462517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18616,7 +18603,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 3
   m_TargetDisplay: 0
 --- !u!224 &1653462519
 RectTransform:

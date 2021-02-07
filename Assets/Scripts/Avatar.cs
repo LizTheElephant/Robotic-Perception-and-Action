@@ -30,8 +30,15 @@ public class Avatar : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
+        if (Input.GetMouseButtonDown(0))
         {
+            Debug.LogWarning("Clicked");
+            if (EventSystem.current.IsPointerOverGameObject())
+            {
+                Debug.LogWarning("Pointer over UI;");
+                return;
+            }
+            Debug.LogWarning("Pointer NOT over UI;");
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 

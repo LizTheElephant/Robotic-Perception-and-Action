@@ -74,7 +74,6 @@ public class AlgorithmUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 	{
 		Debug.Log("Clicked " + option);
 		active = option;
-		Debug.Log("Setting Wrold Grid priority to " + option);
 		worldGridScript.priority = option;
 		avatarScript.Stop();
 		hidePaused();

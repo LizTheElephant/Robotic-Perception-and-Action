@@ -1,22 +1,65 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System;
 
-public class Pathfinding : MonoBehaviour
+public class Pathfinding
 {
 
-    WorldGrid grid;
-
-    void Awake()
+    public static void BreadthFirstSearch(WorldGrid grid, PathRequest request, Action<PathResult> callback)
     {
-        grid = GetComponent<WorldGrid>();
+        Debug.Log("BreadthFirstSearch");
+        Dictionary<int, List<Node>> exploredDictionary = new Dictionary<int, List<Node>>();
+
+        List<Node> waypoints = new List<Node>();
+        bool pathSuccess = false;
+
+        Node start = grid.NodeFromWorldPoint(request.pathStart);
+        Node target = grid.NodeFromWorldPoint(request.pathEnd);
+        start.parent = start;
+
+        int iterator = 0;
+        if (target.walkable)
+        {
+
+            Heap<Node> queue = new Heap<Node>(grid.MaxSize);
+            queue.Add(start);
+            while (queue.Count > 0)
+            {
+                List<Node> explored = new List<Node>();
+                Node current = queue.RemoveFirst();
+
+                if (current == target)
+                {
+                    pathSuccess = true;
+                    break;
+                }
+
+                foreach (Node neighbour in grid.GetNeighbours(current))
+                {
+                    if (neighbour.walkable && !queue.Contains(neighbour))
+                    {
+                        queue.Add(neighbour);
+                        explored.Add(neighbour);
+                    }
+                }
+                exploredDictionary.Add(iterator, new List<Node>(explored));
+                explored.Clear();
+                iterator++;
+                
+            }
+        }
+        if (pathSuccess)
+        {
+            waypoints = RetracePath(start, target);
+            pathSuccess = waypoints.Count > 0;
+        }
+        callback(new PathResult(waypoints, exploredDictionary, pathSuccess, request.callback));
     }
 
-
-    public void FindPath(PathRequest request, Action<PathResult> callback)
+    public static void AStar(WorldGrid grid, PathRequest request, Action<PathResult> callback)
     {
+        UnityEngine.Debug.Log("A* Search");
         Dictionary<int, List<Node>> exploredDictionary = new Dictionary<int, List<Node>>();
 
         List<Node> waypoints = new List<Node>();
@@ -29,7 +72,8 @@ public class Pathfinding : MonoBehaviour
         int iterator = 0;
         if (/*startNode.walkable && */targetNode.walkable)
         {
-
+            UnityEngine.Debug.Log("Target walkable");
+        
             Heap<Node> openSet = new Heap<Node>(grid.MaxSize);
             HashSet<Node> closedSet = new HashSet<Node>();
             openSet.Add(startNode);
@@ -72,37 +116,40 @@ public class Pathfinding : MonoBehaviour
                         }
                     }
                 }
+                UnityEngine.Debug.Log("Iteration done");
                 exploredDictionary.Add(iterator, new List<Node>(exploredSet));
                 exploredSet.Clear();
                 iterator++;
                 
             }
         }
+        UnityEngine.Debug.Log("Finished");
         if (pathSuccess)
         {
+            UnityEngine.Debug.Log("Path found");
             waypoints = RetracePath(startNode, targetNode);
             pathSuccess = waypoints.Count > 0;
         }
         callback(new PathResult(waypoints, exploredDictionary, pathSuccess, request.callback));
     }
 
-    List<Node> RetracePath(Node startNode, Node endNode)
+    static List<Node> RetracePath(Node start, Node endNode)
     {
         List<Node> path = new List<Node>();
-        Node currentNode = endNode;
+        Node current = endNode;
 
-        while (currentNode != startNode)
+        while (current != start)
         {
-            path.Add(currentNode);
-            currentNode = currentNode.parent;
+            path.Add(current);
+            current = current.parent;
         }
-        path.Add(startNode);
+        path.Add(start);
         path.Reverse();
         return path;
 
     }
 
-    Vector3[] SimplifyPath(List<Node> path)
+    static Vector3[] SimplifyPath(List<Node> path)
     {
         List<Vector3> waypoints = new List<Vector3>();
         Vector2 directionOld = Vector2.zero;
@@ -119,7 +166,7 @@ public class Pathfinding : MonoBehaviour
         return waypoints.ToArray();
     }
 
-    int GetDistance(Node nodeA, Node nodeB)
+    static int GetDistance(Node nodeA, Node nodeB)
     {
         int dstX = Mathf.Abs(nodeA.gridX - nodeB.gridX);
         int dstY = Mathf.Abs(nodeA.gridY - nodeB.gridY);
@@ -128,6 +175,5 @@ public class Pathfinding : MonoBehaviour
             return 14 * dstY + 10 * (dstX - dstY);
         return 14 * dstX + 10 * (dstY - dstX);
     }
-
 
 }

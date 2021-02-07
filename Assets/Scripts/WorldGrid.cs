@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class WorldGrid : MonoBehaviour, IPointerUpHandler
+public class WorldGrid : MonoBehaviour
 {
     public enum PathPlanningPriority
     { 
@@ -39,6 +39,7 @@ public class WorldGrid : MonoBehaviour, IPointerUpHandler
 
     void Awake()
     {
+        Debug.Log("WorldGrid Awake");
         Debug.Assert(gridWorldSize.x > 0 && gridWorldSize.y > 0, "Grid must be larger than 0 in both dimensions.");
         Debug.Assert(nodeRadius > 0, "Radius must be larger than 0.");
         Debug.Assert(prefab != null, "Token must be set.");
@@ -61,11 +62,7 @@ public class WorldGrid : MonoBehaviour, IPointerUpHandler
         }
         BlurPenaltyMap();
     }
-     
-    public void OnPointerUp (PointerEventData data) {
-        Debug.Log("Clicked");
-    }
-
+    
     private Node CreateNodeAtIndex(Vector3 worldBottomLeft, int x, int y)
     {
         Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
@@ -213,7 +210,6 @@ public class WorldGrid : MonoBehaviour, IPointerUpHandler
                 penalty +=  + 1;
                 break;
         }
-        Debug.LogError("Movement priority: " + priority + ", region penalty: " + penalty);
         return penalty += n.basePenalty;
     }
 
