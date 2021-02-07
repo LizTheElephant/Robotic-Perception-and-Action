@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -29,7 +30,7 @@ public class Avatar : MonoBehaviour
 
     void Update()
     {
-        if ((Input.GetMouseButtonDown(0)))
+        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
         {
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -66,14 +67,21 @@ public class Avatar : MonoBehaviour
         }
     }
 
+    public void Stop()
+    {
+        Debug.Log("Stopping!");
+        StopCoroutine("FollowPath");
+        StopCoroutine("ShowExploredArea");
+        StopCoroutine("DrawPath");
+    }
+
+
     public void OnPathFound(List<Node> waypoints, Dictionary<int, List<Node>> exploredSet, bool pathSuccessful)
     {
 
         if (pathSuccessful)
         {
-            StopCoroutine("FollowPath");
-            StopCoroutine("ShowExploredArea");
-            StopCoroutine("DrawPath");
+            Stop();
             StopCoroutine("DissolveSurrounding");
             
             ResetAllNodes();

@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class WorldGrid : MonoBehaviour
+public class WorldGrid : MonoBehaviour, IPointerUpHandler
 {
     public enum PathPlanningPriority
     { 
@@ -19,20 +20,6 @@ public class WorldGrid : MonoBehaviour
         public int terrainPenalty;
         public int terrainFuelConsumption;
         public int countPenaltyIdx;
-        
-        public int GetPenalty(PathPlanningPriority priority)
-        {
-            if (priority == PathPlanningPriority.SmallestFuelConsumption)
-            {
-                return terrainFuelConsumption;
-            }    
-            else if (priority == PathPlanningPriority.ShortestTime) 
-            {
-                return terrainPenalty;
-            }
-            return 1;
-        }
-
     }
 
     public PathPlanningPriority priority;
@@ -74,7 +61,10 @@ public class WorldGrid : MonoBehaviour
         }
         BlurPenaltyMap();
     }
-
+     
+    public void OnPointerUp (PointerEventData data) {
+        Debug.Log("Clicked");
+    }
 
     private Node CreateNodeAtIndex(Vector3 worldBottomLeft, int x, int y)
     {
@@ -85,10 +75,11 @@ public class WorldGrid : MonoBehaviour
         int movementPenalty = collision ? obstacleProximityPenalty : 0;
 
         RaycastHit hit;
+        TerrainType terrain = null;
         // count only movement penalty of layer with lowest countPenaltyIdx
-        foreach(TerrainType region in walkableRegions) {
-            if (Physics.Raycast(worldPoint + (1000 * Vector3.up), Vector3.down, out hit, Mathf.Infinity, region.layerMask))  {
-                movementPenalty += region.GetPenalty(priority);
+        foreach(TerrainType i in walkableRegions) {
+            if (Physics.Raycast(worldPoint + (1000 * Vector3.up), Vector3.down, out hit, Mathf.Infinity, i.layerMask))  {
+                terrain = i;
                 worldPoint.y += (0.5f + hit.point.y);
                 break;
             }
@@ -96,7 +87,7 @@ public class WorldGrid : MonoBehaviour
         GameObject token = Instantiate(prefab, worldPoint, Quaternion.identity) as GameObject;
         token.name =  $"Token: {x}, {y}";
         
-        return new Node(!collision, worldPoint, x, y, movementPenalty, token, nodeRadius);
+        return new Node(!collision, worldPoint, x, y, movementPenalty, terrain, token, nodeRadius);
     }
 
     //smooth weights
@@ -117,7 +108,7 @@ public class WorldGrid : MonoBehaviour
             for (int x = -kernelExtents; x <= kernelExtents; x++)
             {
                 int sampleX = Mathf.Clamp(x, 0, kernelExtents);
-                penaltiesHorizontalPass[0, y] += grid[sampleX, y].movementPenalty;
+                penaltiesHorizontalPass[0, y] += grid[sampleX, y].basePenalty;
             }
 
             for (int x = 1; x < gridSizeX; x++)
@@ -125,7 +116,7 @@ public class WorldGrid : MonoBehaviour
                 int removeIndex = Mathf.Clamp(x - kernelExtents - 1, 0, gridSizeX);
                 int addIndex = Mathf.Clamp(x + kernelExtents, 0, gridSizeX - 1);
 
-                penaltiesHorizontalPass[x, y] = penaltiesHorizontalPass[x - 1, y] - grid[removeIndex, y].movementPenalty + grid[addIndex, y].movementPenalty;
+                penaltiesHorizontalPass[x, y] = penaltiesHorizontalPass[x - 1, y] - grid[removeIndex, y].basePenalty + grid[addIndex, y].basePenalty;
             }
         }
 
@@ -138,7 +129,7 @@ public class WorldGrid : MonoBehaviour
             }
 
             int blurredPenalty = Mathf.RoundToInt((float)penaltiesVerticalPass[x, 0] / (kernelSize * kernelSize));
-            grid[x, 0].movementPenalty = blurredPenalty;
+            grid[x, 0].basePenalty = blurredPenalty;
 
             for (int y = 1; y < gridSizeY; y++)
             {
@@ -147,7 +138,7 @@ public class WorldGrid : MonoBehaviour
 
                 penaltiesVerticalPass[x, y] = penaltiesVerticalPass[x, y - 1] - penaltiesHorizontalPass[x, removeIndex] + penaltiesHorizontalPass[x, addIndex];
                 blurredPenalty = Mathf.RoundToInt((float)penaltiesVerticalPass[x, y] / (kernelSize * kernelSize));
-                grid[x, y].movementPenalty = blurredPenalty;
+                grid[x, y].basePenalty = blurredPenalty;
             }
         }
 
@@ -161,7 +152,6 @@ public class WorldGrid : MonoBehaviour
         {
             for (int y = -1; y <= 1; y++)
             {
-
                 if (x == 0 && y == 0)
                 {
                     // current node
@@ -207,6 +197,24 @@ public class WorldGrid : MonoBehaviour
             }
         }
         return new Vector2(minFCost, maxFCost);
+    }
+
+    public int GetMovementPenalty(Node n) {
+        int penalty = 0;
+        switch (priority)
+        {
+            case PathPlanningPriority.SmallestFuelConsumption:
+                penalty += n.terrain.terrainFuelConsumption;
+                break;
+            case PathPlanningPriority.ShortestTime:
+                penalty +=  + n.terrain.terrainPenalty;
+                break;
+            default:
+                penalty +=  + 1;
+                break;
+        }
+        Debug.LogError("Movement priority: " + priority + ", region penalty: " + penalty);
+        return penalty += n.basePenalty;
     }
 
     public int MaxSize

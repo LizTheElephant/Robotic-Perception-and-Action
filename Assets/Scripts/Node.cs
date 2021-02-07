@@ -5,12 +5,15 @@ using System.Collections;
 
 public class Node : IHeapItem<Node>
 {
+    static int fCostMax = 0;
+    static int fCostMin = int.MaxValue;
 
     public bool walkable;
     public Vector3 worldPosition;
     public int gridX;
     public int gridY;
-    public int movementPenalty;
+    public int basePenalty;
+    public WorldGrid.TerrainType terrain;
 
     public int gCost; //distance from start
     public int hCost; //distance to target
@@ -18,24 +21,24 @@ public class Node : IHeapItem<Node>
     public Node exploredFrom;
     int heapIndex;
 
-    static int fCostMax = 0;
-    static int fCostMin = int.MaxValue;
 
     Token script;
 
     public GameObject token;
 
-    public Node(bool _walkable, Vector3 _worldPos, int _gridX, int _gridY, int _penalty, GameObject _token, float _diameter)
+    public Node(bool _walkable, Vector3 _worldPos, int _gridX, int _gridY, int _penalty, WorldGrid.TerrainType _terrain, GameObject _token, float _diameter)
     {
         walkable = _walkable;
         worldPosition = _worldPos;
         gridX = _gridX;
         gridY = _gridY;
-        movementPenalty = _penalty;
+        basePenalty = _penalty;
+        terrain = _terrain;
 
         _token.transform.position = _worldPos;
         _token.SetActive(false);
         token = _token;
+        script = token.GetComponent<Token>();
 
         token.transform.localScale *= _diameter;
     }
@@ -81,8 +84,6 @@ public class Node : IHeapItem<Node>
     public void ExploreNode()
     {
         token.SetActive(true);
-        if (script == null)
-            script = token.GetComponent<Token>();
         script.SetColorCode(fCost, fCostMin, fCostMax);
         script.RotateTowardsParent(parent.token);        
         script.DissolveSurrounding();
@@ -91,15 +92,11 @@ public class Node : IHeapItem<Node>
     public void ChooseAsPath()
     {
         token.SetActive(true);
-        if (script == null)
-            script = token.GetComponent<Token>();
         script.SetAsChosenPath();
     }
 
     public void Reset()
     {
-        if (script == null)
-          script = token.GetComponent<Token>();
         script.Reset();
     }
 
