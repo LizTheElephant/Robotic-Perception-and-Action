@@ -12962,6 +12962,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eebcefe535a1f487a9242514b2c0f782, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  algorithm: 0
 --- !u!64 &1165068692
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -18640,7 +18641,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   breadthFirst: {fileID: 117169443}
-  djiekstra: {fileID: 1675098245}
+  dijkstra: {fileID: 1675098245}
   aStar: {fileID: 2098889615}
 --- !u!1 &1654676526 stripped
 GameObject:

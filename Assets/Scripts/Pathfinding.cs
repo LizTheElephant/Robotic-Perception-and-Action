@@ -5,57 +5,145 @@ using System;
 
 public class Pathfinding
 {
-
     public static void BreadthFirstSearch(WorldGrid grid, PathRequest request, Action<PathResult> callback)
     {
-        Debug.Log("BreadthFirstSearch");
+        UnityEngine.Debug.Log("Breadth First Search");
         Dictionary<int, List<Node>> exploredDictionary = new Dictionary<int, List<Node>>();
 
         List<Node> waypoints = new List<Node>();
         bool pathSuccess = false;
 
-        Node start = grid.NodeFromWorldPoint(request.pathStart);
-        Node target = grid.NodeFromWorldPoint(request.pathEnd);
-        start.parent = start;
+        Node startNode = grid.NodeFromWorldPoint(request.pathStart);
+        Node targetNode = grid.NodeFromWorldPoint(request.pathEnd);
+        startNode.parent = startNode;
 
         int iterator = 0;
-        if (target.walkable)
+        if (targetNode.walkable)
         {
-
-            Heap<Node> queue = new Heap<Node>(grid.MaxSize);
-            queue.Add(start);
-            while (queue.Count > 0)
+            UnityEngine.Debug.Log("Target walkable");
+        
+            var openSet = new Queue<Node>(grid.MaxSize);
+            var closedSet = new HashSet<Node>();
+            openSet.Enqueue(startNode);
+            while (openSet.Count > 0)
             {
-                List<Node> explored = new List<Node>();
-                Node current = queue.RemoveFirst();
 
-                if (current == target)
+                List<Node> exploredSet = new List<Node>();
+                Node currentNode = openSet.Dequeue();
+
+                closedSet.Add(currentNode);
+                if (currentNode == targetNode)
                 {
                     pathSuccess = true;
                     break;
                 }
 
-                foreach (Node neighbour in grid.GetNeighbours(current))
+                foreach (Node neighbour in grid.GetNeighbours(currentNode))
                 {
-                    if (neighbour.walkable && !queue.Contains(neighbour))
+                    if (!neighbour.walkable || closedSet.Contains(neighbour))
                     {
-                        queue.Add(neighbour);
-                        explored.Add(neighbour);
+                        continue;
+                    }
+
+                    if (!openSet.Contains(neighbour))
+                    {
+                        neighbour.parent = currentNode;
+                        openSet.Enqueue(neighbour);
+                        exploredSet.Add(neighbour);
                     }
                 }
-                exploredDictionary.Add(iterator, new List<Node>(explored));
-                explored.Clear();
+                UnityEngine.Debug.Log("Iteration done");
+                exploredDictionary.Add(iterator, new List<Node>(exploredSet));
+                exploredSet.Clear();
                 iterator++;
                 
             }
         }
+        UnityEngine.Debug.Log("Finished");
         if (pathSuccess)
         {
-            waypoints = RetracePath(start, target);
+            UnityEngine.Debug.Log("Path found");
+            waypoints = RetracePath(startNode, targetNode);
             pathSuccess = waypoints.Count > 0;
         }
         callback(new PathResult(waypoints, exploredDictionary, pathSuccess, request.callback));
     }
+
+    public static void Dijkstra(WorldGrid grid, PathRequest request, Action<PathResult> callback)
+    {UnityEngine.Debug.Log("Dijkstra Search");
+        Dictionary<int, List<Node>> exploredDictionary = new Dictionary<int, List<Node>>();
+
+        List<Node> waypoints = new List<Node>();
+        bool pathSuccess = false;
+
+        Node startNode = grid.NodeFromWorldPoint(request.pathStart);
+        Node targetNode = grid.NodeFromWorldPoint(request.pathEnd);
+        startNode.parent = startNode;
+
+        int iterator = 0;
+        if (targetNode.walkable)
+        {
+            UnityEngine.Debug.Log("Target walkable");
+        
+            Heap<Node> openSet = new Heap<Node>(grid.MaxSize);
+            HashSet<Node> closedSet = new HashSet<Node>();
+            openSet.Add(startNode);
+            while (openSet.Count > 0)
+            {
+
+                List<Node> exploredSet = new List<Node>();
+                Node currentNode = openSet.RemoveFirst();
+
+                closedSet.Add(currentNode);
+                if (currentNode == targetNode)
+                {
+                    pathSuccess = true;
+                    break;
+                }
+
+                foreach (Node neighbour in grid.GetNeighbours(currentNode))
+                {
+                    if (!neighbour.walkable || closedSet.Contains(neighbour))
+                    {
+                        continue;
+                    }
+
+                    int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour) + grid.GetMovementPenalty(neighbour);
+                    if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
+                    {
+                        neighbour.gCost = newMovementCostToNeighbour;
+                        neighbour.hCost = 0;
+                        neighbour.parent = currentNode;
+
+                        if (!openSet.Contains(neighbour))
+                        {
+                            openSet.Add(neighbour);
+                            exploredSet.Add(neighbour);
+                        }
+
+                        else
+                        {
+                            openSet.UpdateItem(neighbour);
+                        }
+                    }
+                }
+                UnityEngine.Debug.Log("Iteration done");
+                exploredDictionary.Add(iterator, new List<Node>(exploredSet));
+                exploredSet.Clear();
+                iterator++;
+                
+            }
+        }
+        UnityEngine.Debug.Log("Finished");
+        if (pathSuccess)
+        {
+            UnityEngine.Debug.Log("Path found");
+            waypoints = RetracePath(startNode, targetNode);
+            pathSuccess = waypoints.Count > 0;
+        }
+        callback(new PathResult(waypoints, exploredDictionary, pathSuccess, request.callback));
+    }
+
 
     public static void AStar(WorldGrid grid, PathRequest request, Action<PathResult> callback)
     {
@@ -70,7 +158,7 @@ public class Pathfinding
         startNode.parent = startNode;
 
         int iterator = 0;
-        if (/*startNode.walkable && */targetNode.walkable)
+        if (targetNode.walkable)
         {
             UnityEngine.Debug.Log("Target walkable");
         

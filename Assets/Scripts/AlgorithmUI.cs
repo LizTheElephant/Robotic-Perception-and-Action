@@ -11,25 +11,24 @@ public class AlgorithmUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
 
     public GameObject breadthFirst;
-	public GameObject djiekstra;
+	public GameObject dijkstra;
 	public GameObject aStar;
+
     private GameObject[] hoverTargets;
-
 	private Avatar avatarScript;
-	private WorldGrid worldGridScript;
+	private PathRequestManager pathRequestManager;
 
-	private WorldGrid.PathPlanningPriority active = WorldGrid.PathPlanningPriority.ShortestDistance;
-	private Dictionary<WorldGrid.PathPlanningPriority, GameObject> algDict;
+	private PathRequestManager.Algorithm active = PathRequestManager.Algorithm.BreadthFirstSearch;
+	private Dictionary<PathRequestManager.Algorithm, GameObject> algDict;
 
 
     public void Start()
     {
-		algDict = new Dictionary<WorldGrid.PathPlanningPriority, GameObject>
+		algDict = new Dictionary<PathRequestManager.Algorithm, GameObject>
 		{
-			{ WorldGrid.PathPlanningPriority.ShortestDistance, breadthFirst },
-			{ WorldGrid.PathPlanningPriority.ShortestTime, djiekstra },
-			{ WorldGrid.PathPlanningPriority.SmallestFuelConsumption, aStar },
-			{ WorldGrid.PathPlanningPriority.SafeDistanceFromObstacles, aStar }
+			{ PathRequestManager.Algorithm.BreadthFirstSearch, breadthFirst },
+			{ PathRequestManager.Algorithm.Dijkstra, dijkstra },
+			{ PathRequestManager.Algorithm.AStar, aStar }
 		};
 		foreach(var i in algDict){
 			i.Value.GetComponent<Button>().onClick.AddListener(() => ActivateMode(i.Key));
@@ -39,27 +38,21 @@ public class AlgorithmUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
             hoverTargets = GameObject.FindGameObjectsWithTag("AlgorithmHover");
         
 		avatarScript =  GameObject.Find("Fox").GetComponent<Avatar>();
-		worldGridScript =  GameObject.Find("Grid").GetComponent<WorldGrid>();
+		pathRequestManager =  GameObject.Find("Grid").GetComponent<PathRequestManager>();
 
 		hidePaused();
     }
 
 	public void OnPointerEnter(PointerEventData eventData)
 	{
-		showPaused();
+		foreach(GameObject i in hoverTargets){
+			i.SetActive(true);
+		}
 	}
 
 	public void OnPointerExit(PointerEventData eventData)
     {
 		hidePaused();
-	}
-    
-    //shows objects with ShowOnPause tag
-	public void showPaused()
-	{
-		foreach(GameObject i in hoverTargets){
-			i.SetActive(true);
-		}
 	}
 
     //hides objects with ShowOnPause tag
@@ -70,12 +63,12 @@ public class AlgorithmUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 		}
 	}
 
-	private void ActivateMode(WorldGrid.PathPlanningPriority option)
+	private void ActivateMode(PathRequestManager.Algorithm option)
 	{
 		Debug.Log("Clicked " + option);
 		active = option;
-		worldGridScript.priority = option;
-		avatarScript.Stop();
+		pathRequestManager.algorithm = option;
+		// avatarScript.Stop();
 		hidePaused();
 	}
 

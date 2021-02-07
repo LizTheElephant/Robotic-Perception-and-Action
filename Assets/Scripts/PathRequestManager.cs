@@ -5,10 +5,18 @@ using System.Threading;
 
 public class PathRequestManager : MonoBehaviour
 {
-    Queue<PathResult> results = new Queue<PathResult>();
+    
+    public enum Algorithm
+    { 
+        BreadthFirstSearch, 
+        Dijkstra, 
+        AStar
+    };
 
     static PathRequestManager instance;
+    Queue<PathResult> results = new Queue<PathResult>();
     WorldGrid grid;
+    public Algorithm algorithm = Algorithm.BreadthFirstSearch;
 
     void Awake()
     {
@@ -20,7 +28,6 @@ public class PathRequestManager : MonoBehaviour
     {
         if (results.Count > 0)
         {
-            Debug.LogWarning("PathRequestManager Update");
             int itemsInQueue = results.Count;
             lock (results)
             {
@@ -38,8 +45,19 @@ public class PathRequestManager : MonoBehaviour
         Debug.LogWarning("Path Requested");
         PathRequest request = new PathRequest(start, end, callback);
         ThreadStart threadStart = delegate {
-            Debug.LogWarning("Requesting aSTAR " + instance.grid.nodeRadius);
-            Pathfinding.AStar(instance.grid, request, instance.FinishedProcessingPath);
+            Debug.LogWarning("Active Algorithm: " + instance.algorithm);
+            switch(instance.algorithm)
+            {
+                case Algorithm.AStar:
+                    Pathfinding.AStar(instance.grid, request, instance.FinishedProcessingPath);
+                    break;
+                case Algorithm.Dijkstra:
+                    Pathfinding.Dijkstra(instance.grid, request, instance.FinishedProcessingPath);
+                    break;
+                default:
+                    Pathfinding.BreadthFirstSearch(instance.grid, request, instance.FinishedProcessingPath);
+                    break;
+            }
         };
         threadStart.Invoke();
     }
