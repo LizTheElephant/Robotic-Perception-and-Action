@@ -2,7 +2,7 @@
 using System.Collections;
 using System;
 
-//Heap structure to optimize searching through the open set in pathfinding. Sort based on Fcost
+//Heap structure to optimize searching through the open set in pathfinding
 public class Heap<T> where T : IHeapItem<T>
 {
 
@@ -14,7 +14,7 @@ public class Heap<T> where T : IHeapItem<T>
         items = new T[maxHeapSize];
     }
 
-    public void Add(T item)
+    public void Enqueue(T item)
     {
         item.HeapIndex = currentItemCount;
         items[currentItemCount] = item;
@@ -22,7 +22,7 @@ public class Heap<T> where T : IHeapItem<T>
         currentItemCount++;
     }
 
-    public T RemoveFirst()
+    public T Dequeue()
     {
         T firstItem = items[0];
         currentItemCount--;

@@ -160,8 +160,8 @@ public class WorldGrid : MonoBehaviour
 
                 if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY)
                 {
-                    // inside the grid
-                    neighbours.Add(grid[checkX, checkY]);
+                    if (grid[checkX, checkY].walkable)
+                        neighbours.Add(grid[checkX, checkY]);
                 }
             }
         }
@@ -225,6 +225,13 @@ public class WorldGrid : MonoBehaviour
         get
         {
             return ~(unwalkableMask);
+        }
+    }
+    public Node[,] NodeGrid
+    {
+        get
+        {
+            return grid;
         }
     }
 }

@@ -98,7 +98,6 @@ public class Avatar : MonoBehaviour
         {
             yield return new WaitForSeconds(.3f);
         }
-        PathRequestManager.RequestPath(transform.position, targetPoint, OnPathFound);
 
         float sqrMoveThreshold = pathUpdateMoveThreshold * pathUpdateMoveThreshold;
         Vector3 targetPointPosOld = targetPoint;

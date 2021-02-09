@@ -38,7 +38,7 @@ public class Node : IHeapItem<Node>
         _token.transform.position = _worldPos;
         _token.SetActive(false);
         token = _token;
-        script = token.GetComponent<Token>();
+        script = _token.GetComponent<Token>();
 
         token.transform.localScale *= _diameter;
     }
@@ -98,6 +98,9 @@ public class Node : IHeapItem<Node>
     public void Reset()
     {
         script.Reset();
+        gCost = int.MaxValue;
+        hCost = 0;
+        heapIndex = -1;
     }
 
 }
