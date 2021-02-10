@@ -149,14 +149,6 @@ public class Avatar : MonoBehaviour
 
     IEnumerator ShowExploredArea()
     {
-        foreach (KeyValuePair<int, List<Node>> entry in path.exploredSet)
-        {
-            foreach (Node n in entry.Value)
-            {
-                n.ExploreNode();
-            }
-            yield return null;
-        }
         StartCoroutine("DrawPath");
         yield return null;
     }

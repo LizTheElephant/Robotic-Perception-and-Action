@@ -14,7 +14,7 @@ public class PathRequestManager : MonoBehaviour
     void Awake()
     {
         instance = this;
-        pathfinding = new Pathfinding(this.gameObject.GetComponent<WorldGrid>());
+        pathfinding = this.gameObject.GetComponent<Pathfinding>();
     }
 
     void Update()

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
-public class Pathfinding
+public class Pathfinding : MonoBehaviour
 {
     
     public enum Algorithm
@@ -13,15 +13,24 @@ public class Pathfinding
         AStar
     };
 
+
+
     WorldGrid grid;
 
-    public Pathfinding(WorldGrid grid)
+    // Store explored nodes per iteration to visualize the progress
+    Queue<List<Node>> exploredArea = new Queue<List<Node>>();
+    HashSet<Node> toReset = new HashSet<Node>();
+
+    void Awake()
     {
-        this.grid = grid;
+        this.grid = this.gameObject.GetComponent<WorldGrid>();
     }
 
     public void FindPath(Algorithm algorithm, PathRequest request, Action<PathResult> callback)
     {
+        ResetAllNodes();
+        StopCoroutine("ShowExploredArea");
+        exploredArea.Clear();
         switch (algorithm)
         {
             case Algorithm.BreadthFirstSearch:
@@ -36,19 +45,25 @@ public class Pathfinding
         }
     }
 
+    private void ResetAllNodes() {
+        foreach (Node n in toReset)
+            n.Reset();
+        toReset.Clear();
+    }
+
     private void FindPath(PathRequest request, Action<PathResult> callback, Func<Node, Node, int> gCost, Func<Node, Node, int> hCost)
     {
+        StartCoroutine("ShowExploredArea");
         Node startNode = grid.NodeFromWorldPoint(request.pathStart);
         Node targetNode = grid.NodeFromWorldPoint(request.pathEnd);
         
         startNode.parent = startNode;
-
         bool pathSuccess = false;
         
-        // Store explored nodes per iteration to later visualize the progess
-        var exploredDictionary = new Dictionary<int, List<Node>>();
+
         var openSet = new Heap<Node>(grid.MaxSize);
         var closedSet = new HashSet<Node>();
+        var exploredDictionary = new Dictionary<int, List<Node>>();
 
         openSet.Enqueue(startNode);
         for (int i = 0; openSet.Count > 0; i++)
@@ -85,20 +100,34 @@ public class Pathfinding
                     }
                 }
             }
-            exploredDictionary.Add(i, new List<Node>(exploredSet));
-            exploredSet.Clear();
+
+            exploredDictionary.Add(i, exploredSet);
+            exploredArea.Enqueue(exploredSet);
         }
         
         var waypoints = new List<Node>();
         if (pathSuccess)
         {
-            UnityEngine.Debug.Log("Found path");
             waypoints = RetracePath(startNode, targetNode);
             pathSuccess = waypoints.Count > 0;
         }
         callback(new PathResult(waypoints, exploredDictionary, pathSuccess, request.callback));
     }
 
+    IEnumerator ShowExploredArea()
+    {
+        Debug.LogWarning("ShowExploredArea: Count " + exploredArea.Count);
+        while (exploredArea.Count == 0) yield return null;
+        while (exploredArea.Count > 0) {
+            foreach (Node n  in exploredArea.Dequeue())
+            {
+                Debug.LogWarning("Dequed");
+                n.ExploreNode();
+                toReset.Add(n);
+            }
+            yield return null;
+        }
+    }
 
     private static List<Node> RetracePath(Node start, Node endNode)
     {
