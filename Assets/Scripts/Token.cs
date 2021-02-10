@@ -57,6 +57,11 @@ public class Token : MonoBehaviour
             rend.material.color = Color.Lerp(colors[minindex], colors[maxindex], value / scalingFactor - minindex);
         }
     }
+    
+    public void SetInvalid()
+    {
+        rend.material.color = Color.red;
+    }
 
     public void SetAsChosenPath()
     {

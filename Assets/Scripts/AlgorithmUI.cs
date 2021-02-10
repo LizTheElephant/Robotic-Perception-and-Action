@@ -16,7 +16,7 @@ public class AlgorithmUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     private GameObject[] hoverTargets;
 	private Avatar avatarScript;
-	private PathRequestManager pathRequestManager;
+	private Pathfinding pathfinding;
 
 	private Pathfinding.Algorithm active = Pathfinding.Algorithm.BreadthFirstSearch;
 	private Dictionary<Pathfinding.Algorithm, GameObject> algDict;
@@ -38,7 +38,7 @@ public class AlgorithmUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
             hoverTargets = GameObject.FindGameObjectsWithTag("AlgorithmHover");
         
 		avatarScript =  GameObject.Find("Fox").GetComponent<Avatar>();
-		pathRequestManager =  GameObject.Find("Grid").GetComponent<PathRequestManager>();
+		pathfinding =  GameObject.Find("Grid").GetComponent<Pathfinding>();
 
 		hidePaused();
     }
@@ -67,7 +67,7 @@ public class AlgorithmUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 	{
 		Debug.Log("Clicked " + option);
 		active = option;
-		pathRequestManager.algorithm = option;
+		pathfinding.algorithm = option;
 		// avatarScript.Stop();
 		hidePaused();
 	}

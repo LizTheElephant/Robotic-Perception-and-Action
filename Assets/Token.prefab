@@ -112,4 +112,4 @@ MonoBehaviour:
     type: 2}
   exploredFaceDuration: 5
   pathFadeDuration: 1
-  scalingFactor: 200
+  scalingFactor: 0

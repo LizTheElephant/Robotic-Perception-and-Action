@@ -75,12 +75,19 @@ public class Node : IHeapItem<Node>
         return -compare;
     }
 
-    public void ExploreNode()
+    public void Explore()
     {
         token.SetActive(true);
         script.SetColorCode(fCost, fCostMin, fCostMax);
         script.RotateTowardsParent(parent.token);        
         script.DissolveSurrounding();
+    }
+
+    public void SetInvalid()
+    {
+        token.SetActive(true);
+        script.SetInvalid();
+        script.Dissolve();
     }
 
     public void ChooseAsPath()

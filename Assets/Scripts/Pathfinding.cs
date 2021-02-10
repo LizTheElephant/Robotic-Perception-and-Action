@@ -13,75 +13,80 @@ public class Pathfinding : MonoBehaviour
         AStar
     };
 
-
-
-    WorldGrid grid;
-    
-    private Queue<List<Node>> exploredArea = new Queue<List<Node>>();
+    public Pathfinding.Algorithm algorithm = Pathfinding.Algorithm.BreadthFirstSearch;
+    private WorldGrid grid;
     private HashSet<Node> toReset = new HashSet<Node>();
-    private bool finishedExploring = false;
+    Coroutine findPathCoroutine;
 
-    Coroutine drawPathCoroutine = null;
-    Coroutine showExploredAreaCoroutine = null;
     
     void Awake()
     {
         this.grid = this.gameObject.GetComponent<WorldGrid>();
     }
 
-    public void FindPath(Algorithm algorithm, PathRequest request)
+    public void FindPath(Vector3 start, Vector3 end, Action<List<Node>, bool> callback)
     {
         Reset();
+        IEnumerator findPath;
         switch (algorithm)
         {
             case Algorithm.BreadthFirstSearch:
-                FindPath(request, (i, j) => 1 , (i, j) => 0);
+                findPath = FindPath(start, end, callback, (i, j) => 1 , (i, j) => 0);
                 break;
             case Algorithm.Dijkstra:
-                FindPath(request, TerrainGCost, (i, j) => 0);
+                findPath = FindPath(start, end, callback, TerrainGCost, (i, j) => 0);
                 break;
-            case Algorithm.AStar:
-                FindPath(request, TerrainGCost, GetDistance);
+            default:
+                findPath = FindPath(start, end, callback, TerrainGCost, GetDistance);
                 break;
         }
+        findPathCoroutine = StartCoroutine(findPath);
     }
 
     private void Reset() {
-        if (showExploredAreaCoroutine != null)
-            StopCoroutine(showExploredAreaCoroutine);
-        if (drawPathCoroutine != null)
-            StopCoroutine(drawPathCoroutine);
+        if (findPathCoroutine != null)
+            StopCoroutine(findPathCoroutine);
         foreach (Node n in toReset)
             n.Reset();
         toReset.Clear();
-        exploredArea.Clear();
-        finishedExploring = false;
     }
 
-    private void FindPath(PathRequest request, Func<Node, Node, int> gCost, Func<Node, Node, int> hCost)
+    private IEnumerator FindPath(
+        Vector3 start, 
+        Vector3 end, 
+        Action<List<Node>, bool> callback, 
+        Func<Node, Node, int> gCost, 
+        Func<Node, Node, int> hCost)
     {
-        showExploredAreaCoroutine = StartCoroutine("ShowExploredArea");
-        Node startNode = grid.NodeFromWorldPoint(request.pathStart);
-        Node targetNode = grid.NodeFromWorldPoint(request.pathEnd);
-        
-        startNode.parent = startNode;
-        bool pathSuccess = false;
+        Node startNode = grid.NodeFromWorldPoint(start);
+        Node targetNode = grid.NodeFromWorldPoint(end);
 
         var openSet = new Heap<Node>(grid.MaxSize);
         var closedSet = new HashSet<Node>();
 
+        startNode.parent = startNode;
         openSet.Enqueue(startNode);
+        Node currentNode;
+
         for (int i = 0; openSet.Count > 0; i++)
         {
-            Node currentNode = openSet.Dequeue();
-            var exploredSet = new List<Node>();
-
-            closedSet.Add(currentNode);
+            currentNode = openSet.Dequeue();
             if (currentNode == targetNode)
             {
-                pathSuccess = true;
-                break;
+                List<Node> path = RetracePath(startNode, targetNode);
+
+                //draw path from targetPoint back to target
+                foreach (Node n in path)
+                {
+                    n.ChooseAsPath();
+                    toReset.Add(n);
+                    yield return new WaitForSeconds(0.1f);
+                }
+                path.Reverse();
+                callback(path, path.Count > 0);
+                yield break;
             }
+            closedSet.Add(currentNode);
 
             foreach (Node neighbour in grid.GetNeighbours(currentNode))
             {
@@ -94,25 +99,22 @@ public class Pathfinding : MonoBehaviour
                         neighbour.parent = currentNode;
 
                         if (!openSet.Contains(neighbour))
-                        {
                             openSet.Enqueue(neighbour);
-                            exploredSet.Add(neighbour);
-                        }
                         else
-                        {
                             openSet.UpdateItem(neighbour);
-                        }
+                        
+                        neighbour.Explore();
+                        toReset.Add(neighbour);
                     }
                 }
             }
-
-            exploredArea.Enqueue(exploredSet);
+            //speed things up a bit
+            if (i % 10 == 0)
+                yield return null;
         }
-        if (pathSuccess)
+        foreach (Node n in toReset)
         {
-            List<Node> path = RetracePath(startNode, targetNode);
-            IEnumerator drawPath = DrawPath(path, request.callback);
-            drawPathCoroutine = StartCoroutine(drawPath);
+            n.SetInvalid();
         }
     }
 
@@ -128,39 +130,6 @@ public class Pathfinding : MonoBehaviour
         }
         path.Add(start);
         return path;
-    }
-
-
-    IEnumerator ShowExploredArea()
-    {
-        while (exploredArea.Count == 0)
-            yield return null;
-        while (exploredArea.Count > 0)
-        {
-            foreach (Node n  in exploredArea.Dequeue())
-            {
-                n.ExploreNode();
-                toReset.Add(n);
-            }
-            yield return null;
-        }
-        finishedExploring = true;
-    }
-
-    IEnumerator DrawPath(List<Node> path, Action<List<Node>, bool> callback)
-    {
-        while (!finishedExploring)
-            yield return null;
-
-        //draw path from targetPoint back to target
-        foreach (Node n in path)
-        {
-            n.ChooseAsPath();
-            toReset.Add(n);
-            yield return new WaitForSeconds(0.1f);
-        }
-        path.Reverse();
-        callback(path, path.Count > 0);
     }
 
     private static Vector3[] SimplifyPath(List<Node> path)
@@ -192,17 +161,5 @@ public class Pathfinding : MonoBehaviour
         if (dstX > dstY)
             return 14 * dstY + 10 * (dstX - dstY);
         return 14 * dstX + 10 * (dstY - dstX);
-    }
-
-    private struct CostFunc
-    {
-        public Func<Node, Node, int> gCost;
-        public Func<Node, Node, int> hCost;
-
-        public CostFunc(Func<Node, Node, int> gCost, Func<Node, Node, int> hCost)
-        {
-            this.gCost = gCost;
-            this.hCost = hCost;
-        }
     }
 }

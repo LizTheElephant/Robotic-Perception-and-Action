@@ -22,10 +22,13 @@ public class Avatar : MonoBehaviour
     private Path path;
     private Vector3 targetPoint;
     private bool followingPath;
+
+    private Pathfinding pathfinder;
     
     void Start()
     {
         target.SetActive(false);
+        pathfinder = GameObject.Find("Grid").GetComponent<Pathfinding>();
     }
 
     void Update()
@@ -86,10 +89,11 @@ public class Avatar : MonoBehaviour
 
     IEnumerator UpdatePath()
     {
+        Stop();
         //the first few frames in unity can have large delta time values.
         //therefore the followpath accurracy is very low right after hitting play
         if (Time.timeSinceLevelLoad > .5f)
-            PathRequestManager.RequestPath(transform.position, targetPoint, OnPathFound);
+            pathfinder.FindPath(transform.position, targetPoint, OnPathFound);
         yield return new WaitForSeconds(.5f);
         
     }
