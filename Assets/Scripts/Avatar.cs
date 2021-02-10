@@ -69,24 +69,18 @@ public class Avatar : MonoBehaviour
 
     public void Stop()
     {
-        StopCoroutine("FollowPath");
-        StopCoroutine("ShowExploredArea");
-        StopCoroutine("DrawPath");
+            StopCoroutine("FollowPath");
     }
 
 
-    public void OnPathFound(List<Node> waypoints, Dictionary<int, List<Node>> exploredSet, bool pathSuccessful)
+    public void OnPathFound(List<Node> waypoints, bool pathSuccessful)
     {
-
         if (pathSuccessful)
         {
             Stop();
-            StopCoroutine("DissolveSurrounding");
-            
-            ResetAllNodes();
-            path = new Path(waypoints, exploredSet, transform.position, turnDst, stoppingDst);
+            path = new Path(waypoints, transform.position, turnDst, stoppingDst);
             followingPath = false;
-            StartCoroutine("ShowExploredArea");
+            StartCoroutine("FollowPath");
         }
     }
 
@@ -144,41 +138,6 @@ public class Avatar : MonoBehaviour
                 transform.Translate(Vector3.forward * Time.deltaTime * speed * speedPercent, Space.Self);
             }
             yield return null;
-        }
-    }
-
-    IEnumerator ShowExploredArea()
-    {
-        StartCoroutine("DrawPath");
-        yield return null;
-    }
-
-    IEnumerator DrawPath()
-    {
-        //draw path from targetPoint back to targett
-        foreach (Node step in path.lookPoints.Select(x => x).Reverse())
-        {
-            step.ChooseAsPath();
-            yield return new WaitForSeconds(0.1f);
-        }
-        StartCoroutine("FollowPath");
-        yield return null;
-    }
-
-    private void ResetAllNodes() {
-        if (path != null)
-        {
-            foreach (KeyValuePair<int, List<Node>> entry in path.exploredSet)
-            {
-                foreach (Node n in entry.Value)
-                {
-                    n.Reset();
-                }
-            }
-            foreach (Node n in path.lookPoints)
-            {
-                n.Reset();
-            }
         }
     }
 }

@@ -16,54 +16,59 @@ public class Pathfinding : MonoBehaviour
 
 
     WorldGrid grid;
+    
+    private Queue<List<Node>> exploredArea = new Queue<List<Node>>();
+    private HashSet<Node> toReset = new HashSet<Node>();
+    private bool finishedExploring = false;
 
-    // Store explored nodes per iteration to visualize the progress
-    Queue<List<Node>> exploredArea = new Queue<List<Node>>();
-    HashSet<Node> toReset = new HashSet<Node>();
-
+    Coroutine drawPathCoroutine = null;
+    Coroutine showExploredAreaCoroutine = null;
+    
     void Awake()
     {
         this.grid = this.gameObject.GetComponent<WorldGrid>();
     }
 
-    public void FindPath(Algorithm algorithm, PathRequest request, Action<PathResult> callback)
+    public void FindPath(Algorithm algorithm, PathRequest request)
     {
-        ResetAllNodes();
-        StopCoroutine("ShowExploredArea");
-        exploredArea.Clear();
+        Reset();
         switch (algorithm)
         {
             case Algorithm.BreadthFirstSearch:
-                FindPath(request, callback, (i, j) => 1 , (i, j) => 0);
+                FindPath(request, (i, j) => 1 , (i, j) => 0);
                 break;
             case Algorithm.Dijkstra:
-                FindPath(request, callback, TerrainGCost, (i, j) => 0);
+                FindPath(request, TerrainGCost, (i, j) => 0);
                 break;
             case Algorithm.AStar:
-                FindPath(request, callback, TerrainGCost, GetDistance);
+                FindPath(request, TerrainGCost, GetDistance);
                 break;
         }
     }
 
-    private void ResetAllNodes() {
+    private void Reset() {
+        if (showExploredAreaCoroutine != null)
+            StopCoroutine(showExploredAreaCoroutine);
+        if (drawPathCoroutine != null)
+            StopCoroutine(drawPathCoroutine);
         foreach (Node n in toReset)
             n.Reset();
         toReset.Clear();
+        exploredArea.Clear();
+        finishedExploring = false;
     }
 
-    private void FindPath(PathRequest request, Action<PathResult> callback, Func<Node, Node, int> gCost, Func<Node, Node, int> hCost)
+    private void FindPath(PathRequest request, Func<Node, Node, int> gCost, Func<Node, Node, int> hCost)
     {
-        StartCoroutine("ShowExploredArea");
+        showExploredAreaCoroutine = StartCoroutine("ShowExploredArea");
         Node startNode = grid.NodeFromWorldPoint(request.pathStart);
         Node targetNode = grid.NodeFromWorldPoint(request.pathEnd);
         
         startNode.parent = startNode;
         bool pathSuccess = false;
-        
 
         var openSet = new Heap<Node>(grid.MaxSize);
         var closedSet = new HashSet<Node>();
-        var exploredDictionary = new Dictionary<int, List<Node>>();
 
         openSet.Enqueue(startNode);
         for (int i = 0; openSet.Count > 0; i++)
@@ -101,37 +106,19 @@ public class Pathfinding : MonoBehaviour
                 }
             }
 
-            exploredDictionary.Add(i, exploredSet);
             exploredArea.Enqueue(exploredSet);
         }
-        
-        var waypoints = new List<Node>();
         if (pathSuccess)
         {
-            waypoints = RetracePath(startNode, targetNode);
-            pathSuccess = waypoints.Count > 0;
-        }
-        callback(new PathResult(waypoints, exploredDictionary, pathSuccess, request.callback));
-    }
-
-    IEnumerator ShowExploredArea()
-    {
-        Debug.LogWarning("ShowExploredArea: Count " + exploredArea.Count);
-        while (exploredArea.Count == 0) yield return null;
-        while (exploredArea.Count > 0) {
-            foreach (Node n  in exploredArea.Dequeue())
-            {
-                Debug.LogWarning("Dequed");
-                n.ExploreNode();
-                toReset.Add(n);
-            }
-            yield return null;
+            List<Node> path = RetracePath(startNode, targetNode);
+            IEnumerator drawPath = DrawPath(path, request.callback);
+            drawPathCoroutine = StartCoroutine(drawPath);
         }
     }
 
-    private static List<Node> RetracePath(Node start, Node endNode)
+    private List<Node> RetracePath(Node start, Node endNode)
     {
-        var path = new List<Node>();
+        List<Node> path = new List<Node>();
         Node current = endNode;
 
         while (current != start)
@@ -140,8 +127,40 @@ public class Pathfinding : MonoBehaviour
             current = current.parent;
         }
         path.Add(start);
-        path.Reverse();
         return path;
+    }
+
+
+    IEnumerator ShowExploredArea()
+    {
+        while (exploredArea.Count == 0)
+            yield return null;
+        while (exploredArea.Count > 0)
+        {
+            foreach (Node n  in exploredArea.Dequeue())
+            {
+                n.ExploreNode();
+                toReset.Add(n);
+            }
+            yield return null;
+        }
+        finishedExploring = true;
+    }
+
+    IEnumerator DrawPath(List<Node> path, Action<List<Node>, bool> callback)
+    {
+        while (!finishedExploring)
+            yield return null;
+
+        //draw path from targetPoint back to target
+        foreach (Node n in path)
+        {
+            n.ChooseAsPath();
+            toReset.Add(n);
+            yield return new WaitForSeconds(0.1f);
+        }
+        path.Reverse();
+        callback(path, path.Count > 0);
     }
 
     private static Vector3[] SimplifyPath(List<Node> path)

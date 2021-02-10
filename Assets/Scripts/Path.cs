@@ -6,15 +6,13 @@ public class Path
 {
 
     public List<Node> lookPoints;
-    public readonly Dictionary<int, List<Node>> exploredSet;
     public readonly Line[] turnBoundaries;
     public readonly int finishLineIndex;
     public readonly int slowDownIndex;
 
-    public Path(List<Node> waypoints, Dictionary<int, List<Node>> _exploredSet, Vector3 startPos, float turnDst, float stoppingDst)
+    public Path(List<Node> waypoints, Vector3 startPos, float turnDst, float stoppingDst)
     {
         lookPoints = waypoints;
-        exploredSet = _exploredSet;
         turnBoundaries = new Line[lookPoints.Count];
         finishLineIndex = turnBoundaries.Length - 1;
 
