@@ -5,23 +5,16 @@ using System.Threading;
 
 public class PathRequestManager : MonoBehaviour
 {
-    
-    public enum Algorithm
-    { 
-        BreadthFirstSearch, 
-        Dijkstra, 
-        AStar
-    };
 
     static PathRequestManager instance;
+    Pathfinding pathfinding;
     Queue<PathResult> results = new Queue<PathResult>();
-    WorldGrid grid;
-    public Algorithm algorithm = Algorithm.BreadthFirstSearch;
+    public Pathfinding.Algorithm algorithm = Pathfinding.Algorithm.BreadthFirstSearch;
 
     void Awake()
     {
         instance = this;
-        grid = this.gameObject.GetComponent<WorldGrid>();
+        pathfinding = new Pathfinding(this.gameObject.GetComponent<WorldGrid>());
     }
 
     void Update()
@@ -46,18 +39,7 @@ public class PathRequestManager : MonoBehaviour
         PathRequest request = new PathRequest(start, end, callback);
         ThreadStart threadStart = delegate {
             Debug.LogWarning("Active Algorithm: " + instance.algorithm);
-            switch(instance.algorithm)
-            {
-                case Algorithm.AStar:
-                    Pathfinding.AStar(instance.grid, request, instance.FinishedProcessingPath);
-                    break;
-                case Algorithm.Dijkstra:
-                    Pathfinding.Dijkstra(instance.grid, request, instance.FinishedProcessingPath);
-                    break;
-                default:
-                    Pathfinding.BreadthFirstSearch(instance.grid, request, instance.FinishedProcessingPath);
-                    break;
-            }
+            instance.pathfinding.FindPath(instance.algorithm, request, instance.FinishedProcessingPath);
         };
         threadStart.Invoke();
     }

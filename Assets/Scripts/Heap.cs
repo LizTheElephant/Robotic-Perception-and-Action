@@ -2,120 +2,216 @@
 using System.Collections;
 using System;
 
-//Heap structure to optimize searching through the open set in pathfinding
+//Heap structure to optimize searching through the open set in pathfinding based on {@link https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp}
 public class Heap<T> where T : IHeapItem<T>
 {
+    T[] _items;
+    int _size;
 
-    T[] items;
-    int currentItemCount;
-
-    public Heap(int maxHeapSize)
+    public Heap(int maxSize)
     {
-        items = new T[maxHeapSize];
-    }
-
-    public void Enqueue(T item)
-    {
-        item.HeapIndex = currentItemCount;
-        items[currentItemCount] = item;
-        SortUp(item);
-        currentItemCount++;
-    }
-
-    public T Dequeue()
-    {
-        T firstItem = items[0];
-        currentItemCount--;
-        items[0] = items[currentItemCount];
-        items[0].HeapIndex = 0;
-        SortDown(items[0]);
-        return firstItem;
-    }
-
-    public void UpdateItem(T item)
-    {
-        //we only ever increase priority in pathfinding
-        SortUp(item);
+        if (maxSize <= 0)
+            throw new InvalidOperationException("Heap size must be > 0");
+        _items = new T[maxSize+1];
     }
 
     public int Count
     {
         get
         {
-            return currentItemCount;
+            return _size;
         }
     }
 
     public bool Contains(T item)
     {
-        return Equals(items[item.HeapIndex], item);
+        return Equals(_items[item.HeapIndex], item);
     }
 
-    void SortDown(T item)
+    public void Enqueue(T item)
     {
-        while (true)
+        _size++;
+        _items[_size] = item;
+        item.HeapIndex = _size;
+        SortUp(item);
+    }
+
+    public T Dequeue()
+    {
+        T firstItem = _items[1];
+        if (_size == 1)
         {
-            int childIndexLeft = item.HeapIndex * 2 + 1;
-            int childIndexRight = item.HeapIndex * 2 + 2;
-            int swapIndex = 0;
+            _items[1] = default(T);
+            _size = 0;
+            return firstItem;
+        }
+        T oldLast = _items[_size];
+        _items[1] = oldLast;
+        oldLast.HeapIndex = 1;
+        _items[_size] = default(T);
+        _size--;
+        
+        SortDown(oldLast);
+        return firstItem;
+    }
 
-            if (childIndexLeft < currentItemCount)
+    public void UpdateItem(T item)
+    {
+        int parentIdx = item.HeapIndex >> 1;
+        if(parentIdx > 0 && item.CompareTo(_items[parentIdx]) > 0)
+        {
+            SortUp(item);
+        }
+        else
+        {
+            SortDown(item);
+        }
+    }
+
+    private void SortDown(T item)
+    {
+        int swapIdx = item.HeapIndex;
+        int leftChildIdx = 2 * swapIdx;
+
+        if(leftChildIdx > _size)
+            return;
+
+        int rightChildIdx = leftChildIdx + 1;
+        T leftChild = _items[leftChildIdx];
+        if(leftChild.CompareTo(item) > 0)
+        {
+            // no right child
+            if(rightChildIdx > _size)
             {
-                swapIndex = childIndexLeft;
+                item.HeapIndex = leftChildIdx;
+                leftChild.HeapIndex = swapIdx;
+                _items[swapIdx] = leftChild;
+                _items[leftChildIdx] = item;
+                return;
+            }
+            T rightChild = _items[rightChildIdx];
+            if(leftChild.CompareTo(rightChild) > 0)
+            {
+                leftChild.HeapIndex = swapIdx;
+                _items[swapIdx] = leftChild;
+                swapIdx = leftChildIdx;
+            }
+            else
+            {
+                // right is even higher, move it up and continue
+                rightChild.HeapIndex = swapIdx;
+                _items[swapIdx] = rightChild;
+                swapIdx = rightChildIdx;
+            }
+        }
+        // no right-child
+        else if(rightChildIdx > _size)
+            return;
+        else
+        {
+            T rightChild = _items[rightChildIdx];
+            if(rightChild.CompareTo(item) > 0)
+            {
+                rightChild.HeapIndex = swapIdx;
+                _items[swapIdx] = rightChild;
+                swapIdx = rightChildIdx;
+            }
+            else
+                return;
+        }
 
-                if (childIndexRight < currentItemCount)
+            while(true)
+            {
+                leftChildIdx = 2 * swapIdx;
+
+                // is leaf
+                if(leftChildIdx > _size)
                 {
-                    if (items[childIndexLeft].CompareTo(items[childIndexRight]) < 0)
-                    {
-                        swapIndex = childIndexRight;
-                    }
+                    item.HeapIndex = swapIdx;
+                    _items[swapIdx] = item;
+                    break;
                 }
 
-                if (item.CompareTo(items[swapIndex]) < 0)
+                rightChildIdx = leftChildIdx + 1;
+                leftChild = _items[leftChildIdx];
+                if(leftChild.CompareTo(item) > 0)
                 {
-                    Swap(item, items[swapIndex]);
+                    if(rightChildIdx > _size)
+                    {
+                        item.HeapIndex = leftChildIdx;
+                        leftChild.HeapIndex = swapIdx;
+                        _items[swapIdx] = leftChild;
+                        _items[leftChildIdx] = item;
+                        break;
+                    }
+                    T rightChild = _items[rightChildIdx];
+                    if(leftChild.CompareTo(rightChild) > 0)
+                    {
+                        leftChild.HeapIndex = swapIdx;
+                        _items[swapIdx] = leftChild;
+                        swapIdx = leftChildIdx;
+                    }
+                    else
+                    {
+                        rightChild.HeapIndex = swapIdx;
+                        _items[swapIdx] = rightChild;
+                        swapIdx = rightChildIdx;
+                    }
+                }
+                // no right child
+                else if(rightChildIdx > _size)
+                {
+                    item.HeapIndex = swapIdx;
+                    _items[swapIdx] = item;
+                    break;
                 }
                 else
                 {
-                    return;
+                    T rightChild = _items[rightChildIdx];
+                    if(rightChild.CompareTo(item) > 0)
+                    {
+                        rightChild.HeapIndex = swapIdx;
+                        _items[swapIdx] = rightChild;
+                        swapIdx = rightChildIdx;
+                    }
+                    else
+                    {
+                        item.HeapIndex = swapIdx;
+                        _items[swapIdx] = item;
+                        break;
+                    }
                 }
-
             }
-            else
-            {
-                return;
-            }
-
         }
-    }
 
-    void SortUp(T item)
+    private void SortUp(T item)
     {
-        int parentIndex = (item.HeapIndex - 1) / 2;
-
-        while (true)
+        if (item.HeapIndex > 1)
         {
-            T parentItem = items[parentIndex];
-            if (item.CompareTo(parentItem) > 0)
-            {
-                Swap(item, parentItem);
-            }
-            else
-            {
-                break;
-            }
+            int parent = item.HeapIndex >> 1;
+            T parentItem = _items[parent];
 
-            parentIndex = (item.HeapIndex - 1) / 2;
+            if (parentItem.CompareTo(item) >= 0)
+                return;
+            
+            _items[item.HeapIndex] = parentItem;
+            parentItem.HeapIndex = item.HeapIndex;
+            item.HeapIndex = parent;
+        
+            while (parent > 1)
+            {
+                parent >>= 1;
+                parentItem = _items[parent];
+
+                if (parentItem.CompareTo(item) >= 0)
+                    break;
+
+                _items[item.HeapIndex] = parentItem;
+                parentItem.HeapIndex = item.HeapIndex;
+                item.HeapIndex = parent;
+            }
+            _items[item.HeapIndex] = item;
         }
-    }
-
-    void Swap(T itemA, T itemB)
-    {
-        items[itemA.HeapIndex] = itemB;
-        items[itemB.HeapIndex] = itemA;
-        int itemAIndex = itemA.HeapIndex;
-        itemA.HeapIndex = itemB.HeapIndex;
-        itemB.HeapIndex = itemAIndex;
     }
 }
 

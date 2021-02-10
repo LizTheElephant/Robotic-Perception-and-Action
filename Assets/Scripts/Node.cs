@@ -48,13 +48,7 @@ public class Node : IHeapItem<Node>
         get
         {
             int newfCost = gCost + hCost;
-            if (newfCost > fCostMax)
-            {
-                fCostMax = newfCost;
-            } else if (newfCost < fCostMin)
-            {
-                fCostMin = newfCost;
-            }
+            
             return newfCost;
         }
     }
@@ -100,7 +94,6 @@ public class Node : IHeapItem<Node>
         script.Reset();
         gCost = int.MaxValue;
         hCost = 0;
-        heapIndex = -1;
     }
 
 }

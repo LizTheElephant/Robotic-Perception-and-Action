@@ -13062,7 +13062,7 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 512
     terrainPenalty: 10
-    terrainFuelConsumption: 5
+    terrainFuelConsumption: 50
     countPenaltyIdx: 2
   - layerMask:
       serializedVersion: 2

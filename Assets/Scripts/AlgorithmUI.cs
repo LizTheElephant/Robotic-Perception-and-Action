@@ -18,17 +18,17 @@ public class AlgorithmUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 	private Avatar avatarScript;
 	private PathRequestManager pathRequestManager;
 
-	private PathRequestManager.Algorithm active = PathRequestManager.Algorithm.BreadthFirstSearch;
-	private Dictionary<PathRequestManager.Algorithm, GameObject> algDict;
+	private Pathfinding.Algorithm active = Pathfinding.Algorithm.BreadthFirstSearch;
+	private Dictionary<Pathfinding.Algorithm, GameObject> algDict;
 
 
     public void Start()
     {
-		algDict = new Dictionary<PathRequestManager.Algorithm, GameObject>
+		algDict = new Dictionary<Pathfinding.Algorithm, GameObject>
 		{
-			{ PathRequestManager.Algorithm.BreadthFirstSearch, breadthFirst },
-			{ PathRequestManager.Algorithm.Dijkstra, dijkstra },
-			{ PathRequestManager.Algorithm.AStar, aStar }
+			{ Pathfinding.Algorithm.BreadthFirstSearch, breadthFirst },
+			{ Pathfinding.Algorithm.Dijkstra, dijkstra },
+			{ Pathfinding.Algorithm.AStar, aStar }
 		};
 		foreach(var i in algDict){
 			i.Value.GetComponent<Button>().onClick.AddListener(() => ActivateMode(i.Key));
@@ -63,7 +63,7 @@ public class AlgorithmUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 		}
 	}
 
-	private void ActivateMode(PathRequestManager.Algorithm option)
+	private void ActivateMode(Pathfinding.Algorithm option)
 	{
 		Debug.Log("Clicked " + option);
 		active = option;

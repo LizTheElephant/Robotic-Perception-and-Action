@@ -201,6 +201,7 @@ public class WorldGrid : MonoBehaviour
         switch (priority)
         {
             case PathPlanningPriority.SmallestFuelConsumption:
+                Debug.LogWarning("Penalty: " + penalty);
                 penalty += n.terrain.terrainFuelConsumption;
                 break;
             case PathPlanningPriority.ShortestTime:
