@@ -35,10 +35,8 @@ public class PathRequestManager : MonoBehaviour
 
     public static void RequestPath(Vector3 start, Vector3 end, Action<List<Node>, Dictionary<int, List<Node>>, bool> callback)
     {
-        Debug.LogWarning("Path Requested");
         PathRequest request = new PathRequest(start, end, callback);
         ThreadStart threadStart = delegate {
-            Debug.LogWarning("Active Algorithm: " + instance.algorithm);
             instance.pathfinding.FindPath(instance.algorithm, request, instance.FinishedProcessingPath);
         };
         threadStart.Invoke();

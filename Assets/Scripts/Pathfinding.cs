@@ -65,30 +65,28 @@ public class Pathfinding
 
             foreach (Node neighbour in grid.GetNeighbours(currentNode))
             {
-                if (!neighbour.walkable || closedSet.Contains(neighbour))
-                    continue;
-
-                int tentativeGCost = currentNode.gCost + gCost(currentNode, neighbour);
-                if (tentativeGCost < neighbour.gCost || !openSet.Contains(neighbour))
-                {
-                    neighbour.gCost = tentativeGCost;
-                    neighbour.hCost = hCost(neighbour, targetNode);
-                    neighbour.parent = currentNode;
-
-                    if (!openSet.Contains(neighbour))
+                if (neighbour.walkable && !closedSet.Contains(neighbour)) {
+                    int tentativeGCost = currentNode.gCost + gCost(currentNode, neighbour);
+                    if (tentativeGCost < neighbour.gCost || !openSet.Contains(neighbour))
                     {
-                        openSet.Enqueue(neighbour);
-                        exploredSet.Add(neighbour);
-                    }
-                    else
-                    {
-                        openSet.UpdateItem(neighbour);
+                        neighbour.gCost = tentativeGCost;
+                        neighbour.hCost = hCost(neighbour, targetNode);
+                        neighbour.parent = currentNode;
+
+                        if (!openSet.Contains(neighbour))
+                        {
+                            openSet.Enqueue(neighbour);
+                            exploredSet.Add(neighbour);
+                        }
+                        else
+                        {
+                            openSet.UpdateItem(neighbour);
+                        }
                     }
                 }
             }
             exploredDictionary.Add(i, new List<Node>(exploredSet));
             exploredSet.Clear();
-            i++;
         }
         
         var waypoints = new List<Node>();

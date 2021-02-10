@@ -94,23 +94,10 @@ public class Avatar : MonoBehaviour
     {
         //the first few frames in unity can have large delta time values.
         //therefore the followpath accurracy is very low right after hitting play
-        if (Time.timeSinceLevelLoad < .3f)
-        {
-            yield return new WaitForSeconds(.3f);
-        }
-
-        float sqrMoveThreshold = pathUpdateMoveThreshold * pathUpdateMoveThreshold;
-        Vector3 targetPointPosOld = targetPoint;
-
-        while (true)
-        {
-            yield return null; //new WaitForSeconds(minPathUpdateTime);
-            if ((targetPoint - targetPointPosOld).sqrMagnitude > sqrMoveThreshold)
-            {
-                PathRequestManager.RequestPath(transform.position, targetPoint, OnPathFound);
-                targetPointPosOld = targetPoint;
-            }
-        }
+        if (Time.timeSinceLevelLoad > .5f)
+            PathRequestManager.RequestPath(transform.position, targetPoint, OnPathFound);
+        yield return new WaitForSeconds(.5f);
+        
     }
 
     IEnumerator FollowPath()
