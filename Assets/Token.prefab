@@ -107,8 +107,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ed16337cb4ee4c1fb043055b96b7208, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chosenPathMaterial: {fileID: 2100000, guid: 152a75409221b6244be7b0063172b666, type: 2}
-  exploredAreaMaterial: {fileID: 2100000, guid: 640dc2f025ee433489ca50d9f685de47,
+  chosenPathMaterial: {fileID: 2100000, guid: ec52ac472a60546039e7fef33ff95ebb, type: 2}
+  exploredAreaMaterial: {fileID: 2100000, guid: ec52ac472a60546039e7fef33ff95ebb,
     type: 2}
   exploredFaceDuration: 5
   pathFadeDuration: 1
