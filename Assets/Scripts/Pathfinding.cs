@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
+[RequireComponent(typeof(AudioSource))]
 public class Pathfinding : MonoBehaviour
 {
     
@@ -13,34 +14,64 @@ public class Pathfinding : MonoBehaviour
         AStar
     };
 
-    public Pathfinding.Algorithm algorithm = Pathfinding.Algorithm.BreadthFirstSearch;
-    private WorldGrid grid;
-    private HashSet<Node> toReset = new HashSet<Node>();
-    Coroutine findPathCoroutine;
 
+    private HashSet<Node> toReset = new HashSet<Node>();
+    private Coroutine findPathCoroutine;
+    private WorldGrid grid;
+    private AudioSource invalidTarget;
+    private AudioSource validTarget;
+
+    private Func<Node, Node, int> gCost;
+    private Func<Node, Node, int> hCost;
+    
     
     void Awake()
     {
-        this.grid = this.gameObject.GetComponent<WorldGrid>();
+        this.grid = GetComponent<WorldGrid>();
+        AudioSource[] audioSources = GetComponents<AudioSource>();
+        invalidTarget = audioSources[0];
+        validTarget = audioSources[1];
+        gCost = DefaultGCost;
+        hCost = DefaultHCost;
+    }
+
+    public Algorithm algorithm
+    {
+        set
+        {
+            switch (value)
+            {
+                case Algorithm.BreadthFirstSearch:
+                    gCost = DefaultGCost; 
+                    hCost = DefaultHCost;
+                    break;
+                case Algorithm.Dijkstra:
+                    gCost = TerrainGCost; 
+                    hCost = DefaultHCost;
+                    break;
+                default:
+                    gCost = TerrainGCost;
+                    hCost = GetDistance;
+                    break;
+            }
+        }
     }
 
     public void FindPath(Vector3 start, Vector3 end, Action<List<Node>, bool> callback)
     {
         Reset();
-        IEnumerator findPath;
-        switch (algorithm)
+        Node startNode = grid.NodeFromWorldPoint(start);
+        Node targetNode = grid.NodeFromWorldPoint(end);
+
+        if (targetNode.MarkTarget())
         {
-            case Algorithm.BreadthFirstSearch:
-                findPath = FindPath(start, end, callback, (i, j) => 1 , (i, j) => 0);
-                break;
-            case Algorithm.Dijkstra:
-                findPath = FindPath(start, end, callback, TerrainGCost, (i, j) => 0);
-                break;
-            default:
-                findPath = FindPath(start, end, callback, TerrainGCost, GetDistance);
-                break;
+            validTarget.Play();
+            IEnumerator findPath = FindPathEnum(startNode, targetNode, callback);
+            findPathCoroutine = StartCoroutine(findPath);
         }
-        findPathCoroutine = StartCoroutine(findPath);
+        else {
+            invalidTarget.Play();
+        }
     }
 
     private void Reset() {
@@ -51,16 +82,8 @@ public class Pathfinding : MonoBehaviour
         toReset.Clear();
     }
 
-    private IEnumerator FindPath(
-        Vector3 start, 
-        Vector3 end, 
-        Action<List<Node>, bool> callback, 
-        Func<Node, Node, int> gCost, 
-        Func<Node, Node, int> hCost)
+    private IEnumerator FindPathEnum(Node startNode, Node targetNode, Action<List<Node>, bool> callback)
     {
-        Node startNode = grid.NodeFromWorldPoint(start);
-        Node targetNode = grid.NodeFromWorldPoint(end);
-
         var openSet = new Heap<Node>(grid.MaxSize);
         var closedSet = new HashSet<Node>();
 
@@ -91,7 +114,7 @@ public class Pathfinding : MonoBehaviour
             foreach (Node neighbour in grid.GetNeighbours(currentNode))
             {
                 if (neighbour.walkable && !closedSet.Contains(neighbour)) {
-                    int tentativeGCost = currentNode.gCost + gCost(currentNode, neighbour);
+                    int tentativeGCost = gCost(currentNode, neighbour);
                     if (tentativeGCost < neighbour.gCost || !openSet.Contains(neighbour))
                     {
                         neighbour.gCost = tentativeGCost;
@@ -113,9 +136,7 @@ public class Pathfinding : MonoBehaviour
                 yield return null;
         }
         foreach (Node n in toReset)
-        {
             n.SetInvalid();
-        }
     }
 
     private List<Node> RetracePath(Node start, Node endNode)
@@ -149,9 +170,10 @@ public class Pathfinding : MonoBehaviour
         return waypoints.ToArray();
     }
 
+
     private int TerrainGCost(Node nodeA, Node nodeB)
     {
-        return grid.GetMovementPenalty(nodeB) + GetDistance(nodeA, nodeB);
+        return nodeA.gCost + grid.GetMovementPenalty(nodeB) + GetDistance(nodeA, nodeB);
     }
 
     private static int GetDistance(Node nodeA, Node nodeB)
@@ -161,5 +183,15 @@ public class Pathfinding : MonoBehaviour
         if (dstX > dstY)
             return 14 * dstY + 10 * (dstX - dstY);
         return 14 * dstX + 10 * (dstY - dstX);
+    }
+
+    private int DefaultGCost(Node nodeA, Node nodeB)
+    {
+        return nodeA.gCost + 1;
+    }
+
+    private int DefaultHCost(Node nodeA, Node nodeB)
+    {
+        return 0;
     }
 }

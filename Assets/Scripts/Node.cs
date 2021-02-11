@@ -96,6 +96,16 @@ public class Node : IHeapItem<Node>
         script.SetAsChosenPath();
     }
 
+    public bool MarkTarget()
+    {
+        if (walkable)
+        {
+            token.SetActive(true);
+            script.MarkTarget();
+        }
+        return walkable;
+    }
+
     public void Reset()
     {
         script.Reset();

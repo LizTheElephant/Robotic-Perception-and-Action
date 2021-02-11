@@ -24,11 +24,13 @@ public class Avatar : MonoBehaviour
     private bool followingPath;
 
     private Pathfinding pathfinder;
+    private AudioSource collision;
     
     void Start()
     {
         target.SetActive(false);
         pathfinder = GameObject.Find("Grid").GetComponent<Pathfinding>();
+        collision = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -57,6 +59,7 @@ public class Avatar : MonoBehaviour
         Debug.Log("Collision with " + collider.gameObject.name + ".");
         if (collider.gameObject.CompareTag("Respawn") || collider.gameObject == target)
         {
+            collision.Play();
             target.SetActive(false);
             // immediately dissolve remaining tokens
             if (path != null)
